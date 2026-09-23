@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
@@ -49,20 +50,45 @@ public class Main {
     "CSE"
 );
 
-System.out.println("\n===== COMPANY REQUIREMENTS =====");
+Company infosys = new Company(
+    "Infosys",
+    6.5,
+    1,
+    "CSE"
+);
 
-System.out.println("Company: " + tcs.getCompanyName());
-System.out.println("Minimum CGPA: " + tcs.getMinimumCgpa());
-System.out.println("Maximum Backlogs: " + tcs.getMaximumBacklogs());
-System.out.println("Eligible Branch: " + tcs.getEligibleBranch());
+Company wipro = new Company(
+    "Wipro",
+    6.0,
+    2,
+    "CSE"
+);
+
 EligibilityChecker checker = new EligibilityChecker();
 
-boolean eligible = checker.isEligible(student, tcs);
+boolean tcsEligible = checker.isEligible(student, tcs);
+boolean infosysEligible = checker.isEligible(student, infosys);
+boolean wiproEligible = checker.isEligible(student, wipro);
 
-if (eligible) {
-    System.out.println("\nYou are eligible for " + tcs.getCompanyName());
-} else {
-    System.out.println("\nYou are not eligible for " + tcs.getCompanyName());
+ArrayList<Company> companies = new ArrayList<>();
+companies.add(tcs);
+companies.add(infosys);
+companies.add(wipro);
+System.out.println("\n===== ELIGIBILITY RESULTS =====");
+
+for (Company company : companies) {
+
+    boolean eligible = checker.isEligible(student, company);
+
+    if (eligible) {
+        System.out.println(
+            company.getCompanyName() + " :Eligible"
+        );
+    } else {
+        System.out.println(
+            company.getCompanyName() + " :Not Eligible"
+        );
+    }
 }
     }
 }
