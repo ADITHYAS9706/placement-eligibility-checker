@@ -78,17 +78,12 @@ System.out.println("\n===== ELIGIBILITY RESULTS =====");
 
 for (Company company : companies) {
 
-    boolean eligible = checker.isEligible(student, company);
+    String result = checker.getEligibilityReason(student, company);
 
-    if (eligible) {
-        System.out.println(
-            company.getCompanyName() + " :Eligible"
-        );
-    } else {
-        System.out.println(
-            company.getCompanyName() + " :Not Eligible"
-        );
-    }
+    System.out.println(
+        company.getCompanyName() + " : " + result
+    );
 }
     }
 }
+    

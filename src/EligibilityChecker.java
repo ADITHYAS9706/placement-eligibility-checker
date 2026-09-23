@@ -15,4 +15,23 @@ public class EligibilityChecker {
 
         return cgpaEligible && backlogEligible && branchEligible;
     }
+
+    public String getEligibilityReason(Student student, Company company) {
+
+        if (student.getCgpa() < company.getMinimumCgpa()) {
+            return "CGPA below required " + company.getMinimumCgpa();
+        }
+
+        if (student.getBacklogs() > company.getMaximumBacklogs()) {
+            return "Backlogs exceed allowed limit of "
+                    + company.getMaximumBacklogs();
+        }
+
+        if (!student.getBranch().equalsIgnoreCase(
+                company.getEligibleBranch())) {
+            return "Branch not eligible";
+        }
+
+        return "Eligible";
+    }
 }
