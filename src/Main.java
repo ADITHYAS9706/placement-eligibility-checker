@@ -49,11 +49,20 @@ public class Main {
     "CSE"
 );
 
-System.out.println("\n===== COMPANY DETAILS =====");
+System.out.println("\n===== COMPANY REQUIREMENTS =====");
 
 System.out.println("Company: " + tcs.getCompanyName());
 System.out.println("Minimum CGPA: " + tcs.getMinimumCgpa());
 System.out.println("Maximum Backlogs: " + tcs.getMaximumBacklogs());
 System.out.println("Eligible Branch: " + tcs.getEligibleBranch());
+EligibilityChecker checker = new EligibilityChecker();
+
+boolean eligible = checker.isEligible(student, tcs);
+
+if (eligible) {
+    System.out.println("\nYou are eligible for " + tcs.getCompanyName());
+} else {
+    System.out.println("\nYou are not eligible for " + tcs.getCompanyName());
+}
     }
 }
