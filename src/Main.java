@@ -1,9 +1,10 @@
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
+        
 
         Scanner sc = new Scanner(System.in);
 
@@ -26,13 +27,18 @@ public class Main {
         System.out.print("Enter graduation year: ");
         int graduationYear = sc.nextInt();
 
+        // Create Student object
         Student student = new Student(
-            name,
-            cgpa,
-            backlogs,
-            branch,
-            graduationYear
+                name,
+                cgpa,
+                backlogs,
+                branch,
+                graduationYear
         );
+
+        // Save student to MySQL
+       int studentId = StudentDAO.saveStudent(student);
+       System.out.println("Student ID: " + studentId);
 
         System.out.println("\n===== STUDENT DETAILS =====");
 
@@ -42,48 +48,47 @@ public class Main {
         System.out.println("Branch: " + student.getBranch());
         System.out.println("Graduation Year: " + student.getGraduationYear());
 
-        sc.close();
-        Company tcs = new Company(
-    "TCS",
-    7.0,
-    0,
-    "CSE"
-);
+        // Get companies from MySQL
+        List<Company> companies = CompanyDAO.getAllCompanies();
 
-Company infosys = new Company(
-    "Infosys",
-    6.5,
-    1,
-    "CSE"
-);
+        // Eligibility checker
+        EligibilityChecker checker = new EligibilityChecker();
 
-Company wipro = new Company(
-    "Wipro",
-    6.0,
-    2,
-    "CSE"
-);
+        System.out.println("\n===== ELIGIBILITY RESULTS =====");
 
-EligibilityChecker checker = new EligibilityChecker();
+        for (Company company : companies) {
 
-boolean tcsEligible = checker.isEligible(student, tcs);
-boolean infosysEligible = checker.isEligible(student, infosys);
-boolean wiproEligible = checker.isEligible(student, wipro);
+    String reason =
+        checker.getEligibilityReason(student, company);
 
-ArrayList<Company> companies = new ArrayList<>();
-companies.add(tcs);
-companies.add(infosys);
-companies.add(wipro);
-System.out.println("\n===== ELIGIBILITY RESULTS =====");
+    String result;
 
-for (Company company : companies) {
-
-    String result = checker.getEligibilityReason(student, company);
+    if (reason.equals("Eligible")) {
+        result = "Eligible";
+    } else {
+        result = "Not Eligible";
+    }
 
     System.out.println(
-        company.getCompanyName() + " : " + result
+        company.getCompanyName() + " : " + reason
+    );
+
+    EligibilityResultDAO.saveResult(
+        student.getId(),
+        company.getId(),
+        result,
+        reason
     );
 }
+
+        
+        System.out.println("\n===== VIEW SAVED RESULTS =====");
+
+System.out.print("Enter Student ID: ");
+
+int searchId = sc.nextInt();
+
+ResultDAO.getResultsByStudentId(searchId);
+sc.close();
     }
 }
-    

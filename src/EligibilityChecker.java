@@ -27,10 +27,23 @@ public class EligibilityChecker {
                     + company.getMaximumBacklogs();
         }
 
-        if (!student.getBranch().equalsIgnoreCase(
-                company.getEligibleBranch())) {
-            return "Branch not eligible";
-        }
+        boolean branchEligible = false;
+
+String[] eligibleBranches =
+        company.getEligibleBranch().split(",");
+
+for (String allowedBranch : eligibleBranches) {
+
+    if (student.getBranch().trim()
+            .equalsIgnoreCase(allowedBranch.trim())) {
+
+        branchEligible = true;
+        break;
+    }
+}
+if (!branchEligible) {
+    return "Branch not eligible";
+}
 
         return "Eligible";
     }

@@ -5,6 +5,14 @@ public class Student {
     private int backlogs;
     private String branch;
     private int graduationYear;
+    private int id;
+    public int getId() {
+    return id;
+}
+
+public void setId(int id) {
+    this.id = id;
+}
 
     public Student(String name, double cgpa, int backlogs, String branch, int graduationYear) {
         this.name = name;
