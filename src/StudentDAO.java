@@ -303,4 +303,184 @@ public class StudentDAO {
 
         return false;
     }
+
+
+    // =========================
+    // SEARCH STUDENTS BY NAME
+    // =========================
+
+    public static List<Student> searchStudentsByName(
+            String name) {
+
+        List<Student> students =
+                new ArrayList<>();
+
+        String sql =
+                "SELECT id, name, cgpa, backlogs, " +
+                "branch, graduation_year " +
+                "FROM students " +
+                "WHERE name LIKE ? " +
+                "ORDER BY name";
+
+        try (
+                Connection connection =
+                        DatabaseConnection.getConnection();
+
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(
+                    1,
+                    "%" + name + "%"
+            );
+
+            ResultSet rs =
+                    statement.executeQuery();
+
+            while (rs.next()) {
+
+                students.add(
+                        new Student(
+                                rs.getInt("id"),
+                                rs.getString("name"),
+                                rs.getDouble("cgpa"),
+                                rs.getInt("backlogs"),
+                                rs.getString("branch"),
+                                rs.getInt("graduation_year")
+                        )
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Failed to search students."
+            );
+
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+
+    // =========================
+    // SEARCH STUDENTS BY BRANCH
+    // =========================
+
+    public static List<Student> searchStudentsByBranch(
+            String branch) {
+
+        List<Student> students =
+                new ArrayList<>();
+
+        String sql =
+                "SELECT id, name, cgpa, backlogs, " +
+                "branch, graduation_year " +
+                "FROM students " +
+                "WHERE LOWER(branch) = LOWER(?) " +
+                "ORDER BY name";
+
+        try (
+                Connection connection =
+                        DatabaseConnection.getConnection();
+
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(
+                    1,
+                    branch
+            );
+
+            ResultSet rs =
+                    statement.executeQuery();
+
+            while (rs.next()) {
+
+                students.add(
+                        new Student(
+                                rs.getInt("id"),
+                                rs.getString("name"),
+                                rs.getDouble("cgpa"),
+                                rs.getInt("backlogs"),
+                                rs.getString("branch"),
+                                rs.getInt("graduation_year")
+                        )
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Failed to search students by branch."
+            );
+
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+
+    // =========================
+    // STUDENTS ABOVE CGPA
+    // =========================
+
+    public static List<Student> getStudentsAboveCgpa(
+            double cgpa) {
+
+        List<Student> students =
+                new ArrayList<>();
+
+        String sql =
+                "SELECT id, name, cgpa, backlogs, " +
+                "branch, graduation_year " +
+                "FROM students " +
+                "WHERE cgpa >= ? " +
+                "ORDER BY cgpa DESC";
+
+        try (
+                Connection connection =
+                        DatabaseConnection.getConnection();
+
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setDouble(
+                    1,
+                    cgpa
+            );
+
+            ResultSet rs =
+                    statement.executeQuery();
+
+            while (rs.next()) {
+
+                students.add(
+                        new Student(
+                                rs.getInt("id"),
+                                rs.getString("name"),
+                                rs.getDouble("cgpa"),
+                                rs.getInt("backlogs"),
+                                rs.getString("branch"),
+                                rs.getInt("graduation_year")
+                        )
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Failed to filter students."
+            );
+
+            e.printStackTrace();
+        }
+
+        return students;
+    }
 }

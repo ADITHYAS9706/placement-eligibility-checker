@@ -23,7 +23,9 @@ public class Main {
             System.out.println("8. Add Company");
             System.out.println("9. Update Company");
             System.out.println("10. Delete Company");
-            System.out.println("11. Exit");
+            System.out.println("11. Search Students");
+            System.out.println("12. Find Eligible Companies");
+            System.out.println("13. Exit");
 
             int choice =
                     readInt(
@@ -74,6 +76,14 @@ public class Main {
                     break;
 
                 case 11:
+                    searchStudents(sc);
+                    break;
+
+                case 12:
+                    findEligibleCompanies(sc);
+                    break;
+
+                case 13:
 
                     System.out.println(
                             "Thank you for using Placement Eligibility Checker!"
@@ -85,7 +95,7 @@ public class Main {
                 default:
 
                     System.out.println(
-                            "Invalid choice. Please enter 1 to 11."
+                            "Invalid choice. Please enter 1 to 13."
                     );
             }
         }
@@ -285,19 +295,7 @@ public class Main {
                 );
 
 
-        int studentId =
-                StudentDAO.saveStudent(
-                        student
-                );
-
-
-        if (studentId != -1) {
-
-            System.out.println(
-                    "Student ID: "
-                            + studentId
-            );
-        }
+        StudentDAO.saveStudent(student);
     }
 
 
@@ -329,40 +327,51 @@ public class Main {
 
         for (Student student : students) {
 
-            System.out.println(
-                    "\nStudent ID: "
-                            + student.getId()
-            );
-
-            System.out.println(
-                    "Name: "
-                            + student.getName()
-            );
-
-            System.out.println(
-                    "CGPA: "
-                            + student.getCgpa()
-            );
-
-            System.out.println(
-                    "Backlogs: "
-                            + student.getBacklogs()
-            );
-
-            System.out.println(
-                    "Branch: "
-                            + student.getBranch()
-            );
-
-            System.out.println(
-                    "Graduation Year: "
-                            + student.getGraduationYear()
-            );
-
-            System.out.println(
-                    "-----------------------------"
-            );
+            printStudent(student);
         }
+    }
+
+
+    // =========================
+    // PRINT STUDENT
+    // =========================
+
+    public static void printStudent(
+            Student student) {
+
+        System.out.println(
+                "\nStudent ID: "
+                        + student.getId()
+        );
+
+        System.out.println(
+                "Name: "
+                        + student.getName()
+        );
+
+        System.out.println(
+                "CGPA: "
+                        + student.getCgpa()
+        );
+
+        System.out.println(
+                "Backlogs: "
+                        + student.getBacklogs()
+        );
+
+        System.out.println(
+                "Branch: "
+                        + student.getBranch()
+        );
+
+        System.out.println(
+                "Graduation Year: "
+                        + student.getGraduationYear()
+        );
+
+        System.out.println(
+                "-----------------------------"
+        );
     }
 
 
@@ -401,42 +410,12 @@ public class Main {
         }
 
 
-        System.out.println(
-                "\n===== CURRENT DETAILS ====="
-        );
-
-        System.out.println(
-                "Name: "
-                        + student.getName()
-        );
-
-        System.out.println(
-                "CGPA: "
-                        + student.getCgpa()
-        );
-
-        System.out.println(
-                "Backlogs: "
-                        + student.getBacklogs()
-        );
-
-        System.out.println(
-                "Branch: "
-                        + student.getBranch()
-        );
-
-        System.out.println(
-                "Graduation Year: "
-                        + student.getGraduationYear()
-        );
-
-
         String name;
 
         while (true) {
 
             System.out.print(
-                    "\nEnter new name: "
+                    "Enter new name: "
             );
 
             name =
@@ -590,22 +569,13 @@ public class Main {
 
 
         System.out.println(
-                "\nStudent selected:"
-        );
-
-        System.out.println(
-                "ID: "
-                        + student.getId()
-        );
-
-        System.out.println(
-                "Name: "
+                "Student: "
                         + student.getName()
         );
 
 
         System.out.print(
-                "\nAre you sure you want to delete this student? (yes/no): "
+                "Are you sure? (yes/no): "
         );
 
 
@@ -663,36 +633,6 @@ public class Main {
 
             return;
         }
-
-
-        System.out.println(
-                "\n===== STUDENT DETAILS ====="
-        );
-
-        System.out.println(
-                "Name: "
-                        + student.getName()
-        );
-
-        System.out.println(
-                "CGPA: "
-                        + student.getCgpa()
-        );
-
-        System.out.println(
-                "Backlogs: "
-                        + student.getBacklogs()
-        );
-
-        System.out.println(
-                "Branch: "
-                        + student.getBranch()
-        );
-
-        System.out.println(
-                "Graduation Year: "
-                        + student.getGraduationYear()
-        );
 
 
         List<Company> companies =
@@ -855,25 +795,12 @@ public class Main {
         );
 
 
-        String companyName;
+        System.out.print(
+                "Enter company name: "
+        );
 
-        while (true) {
-
-            System.out.print(
-                    "Enter company name: "
-            );
-
-            companyName =
-                    sc.nextLine().trim();
-
-            if (!companyName.isEmpty()) {
-                break;
-            }
-
-            System.out.println(
-                    "Company name cannot be empty."
-            );
-        }
+        String companyName =
+                sc.nextLine().trim();
 
 
         double minimumCgpa;
@@ -913,30 +840,17 @@ public class Main {
             }
 
             System.out.println(
-                    "Maximum backlogs cannot be negative."
+                    "Backlogs cannot be negative."
             );
         }
 
 
-        String eligibleBranch;
+        System.out.print(
+                "Enter eligible branches: "
+        );
 
-        while (true) {
-
-            System.out.print(
-                    "Enter eligible branches: "
-            );
-
-            eligibleBranch =
-                    sc.nextLine().trim();
-
-            if (!eligibleBranch.isEmpty()) {
-                break;
-            }
-
-            System.out.println(
-                    "Eligible branches cannot be empty."
-            );
-        }
+        String eligibleBranch =
+                sc.nextLine().trim();
 
 
         Company company =
@@ -1009,55 +923,12 @@ public class Main {
         }
 
 
-        System.out.println(
-                "\n===== CURRENT COMPANY DETAILS ====="
+        System.out.print(
+                "Enter new company name: "
         );
 
-        System.out.println(
-                "Company ID: "
-                        + existingCompany.getId()
-        );
-
-        System.out.println(
-                "Company Name: "
-                        + existingCompany.getCompanyName()
-        );
-
-        System.out.println(
-                "Minimum CGPA: "
-                        + existingCompany.getMinimumCgpa()
-        );
-
-        System.out.println(
-                "Maximum Backlogs: "
-                        + existingCompany.getMaximumBacklogs()
-        );
-
-        System.out.println(
-                "Eligible Branches: "
-                        + existingCompany.getEligibleBranch()
-        );
-
-
-        String companyName;
-
-        while (true) {
-
-            System.out.print(
-                    "\nEnter new company name: "
-            );
-
-            companyName =
-                    sc.nextLine().trim();
-
-            if (!companyName.isEmpty()) {
-                break;
-            }
-
-            System.out.println(
-                    "Company name cannot be empty."
-            );
-        }
+        String companyName =
+                sc.nextLine().trim();
 
 
         double minimumCgpa;
@@ -1067,7 +938,7 @@ public class Main {
             minimumCgpa =
                     readDouble(
                             sc,
-                            "Enter new minimum CGPA (0 - 10): "
+                            "Enter new minimum CGPA: "
                     );
 
             if (minimumCgpa >= 0 &&
@@ -1077,7 +948,7 @@ public class Main {
             }
 
             System.out.println(
-                    "CGPA must be between 0 and 10."
+                    "Invalid CGPA."
             );
         }
 
@@ -1089,7 +960,7 @@ public class Main {
             maximumBacklogs =
                     readInt(
                             sc,
-                            "Enter new maximum allowed backlogs: "
+                            "Enter new maximum backlogs: "
                     );
 
             if (maximumBacklogs >= 0) {
@@ -1097,30 +968,17 @@ public class Main {
             }
 
             System.out.println(
-                    "Maximum backlogs cannot be negative."
+                    "Invalid number of backlogs."
             );
         }
 
 
-        String eligibleBranch;
+        System.out.print(
+                "Enter new eligible branches: "
+        );
 
-        while (true) {
-
-            System.out.print(
-                    "Enter new eligible branches: "
-            );
-
-            eligibleBranch =
-                    sc.nextLine().trim();
-
-            if (!eligibleBranch.isEmpty()) {
-                break;
-            }
-
-            System.out.println(
-                    "Eligible branches cannot be empty."
-            );
-        }
+        String eligibleBranch =
+                sc.nextLine().trim();
 
 
         Company updatedCompany =
@@ -1158,58 +1016,8 @@ public class Main {
                 );
 
 
-        List<Company> companies =
-                CompanyDAO.getAllCompanies();
-
-
-        Company companyToDelete =
-                null;
-
-
-        if (companies != null) {
-
-            for (Company company :
-                    companies) {
-
-                if (company.getId() ==
-                        companyId) {
-
-                    companyToDelete =
-                            company;
-
-                    break;
-                }
-            }
-        }
-
-
-        if (companyToDelete == null) {
-
-            System.out.println(
-                    "Company ID not found."
-            );
-
-            return;
-        }
-
-
-        System.out.println(
-                "\nCompany selected for deletion:"
-        );
-
-        System.out.println(
-                "ID: "
-                        + companyToDelete.getId()
-        );
-
-        System.out.println(
-                "Name: "
-                        + companyToDelete.getCompanyName()
-        );
-
-
         System.out.print(
-                "\nAre you sure you want to delete this company? (yes/no): "
+                "Are you sure? (yes/no): "
         );
 
 
@@ -1231,5 +1039,241 @@ public class Main {
         CompanyDAO.deleteCompany(
                 companyId
         );
+    }
+
+
+    // =========================
+    // SEARCH STUDENTS
+    // =========================
+
+    public static void searchStudents(
+            Scanner sc) {
+
+        System.out.println(
+                "\n===== SEARCH STUDENTS ====="
+        );
+
+        System.out.println(
+                "1. Search by Name"
+        );
+
+        System.out.println(
+                "2. Search by Branch"
+        );
+
+        System.out.println(
+                "3. Students Above CGPA"
+        );
+
+
+        int choice =
+                readInt(
+                        sc,
+                        "Enter choice: "
+                );
+
+
+        List<Student> students;
+
+
+        switch (choice) {
+
+            case 1:
+
+                System.out.print(
+                        "Enter name to search: "
+                );
+
+                String name =
+                        sc.nextLine().trim();
+
+                students =
+                        StudentDAO.searchStudentsByName(
+                                name
+                        );
+
+                displaySearchResults(
+                        students
+                );
+
+                break;
+
+
+            case 2:
+
+                System.out.print(
+                        "Enter branch: "
+                );
+
+                String branch =
+                        sc.nextLine().trim();
+
+                students =
+                        StudentDAO.searchStudentsByBranch(
+                                branch
+                        );
+
+                displaySearchResults(
+                        students
+                );
+
+                break;
+
+
+            case 3:
+
+                double cgpa =
+                        readDouble(
+                                sc,
+                                "Enter minimum CGPA: "
+                        );
+
+                students =
+                        StudentDAO.getStudentsAboveCgpa(
+                                cgpa
+                        );
+
+                displaySearchResults(
+                        students
+                );
+
+                break;
+
+
+            default:
+
+                System.out.println(
+                        "Invalid choice."
+                );
+        }
+    }
+
+
+    // =========================
+    // DISPLAY SEARCH RESULTS
+    // =========================
+
+    public static void displaySearchResults(
+            List<Student> students) {
+
+        System.out.println(
+                "\n===== SEARCH RESULTS ====="
+        );
+
+
+        if (students == null ||
+                students.isEmpty()) {
+
+            System.out.println(
+                    "No matching students found."
+            );
+
+            return;
+        }
+
+
+        for (Student student : students) {
+
+            printStudent(student);
+        }
+    }
+
+
+    // =========================
+    // FIND ELIGIBLE COMPANIES
+    // =========================
+
+    public static void findEligibleCompanies(
+            Scanner sc) {
+
+        System.out.println(
+                "\n===== FIND ELIGIBLE COMPANIES ====="
+        );
+
+
+        int studentId =
+                readInt(
+                        sc,
+                        "Enter Student ID: "
+                );
+
+
+        Student student =
+                StudentDAO.getStudentById(
+                        studentId
+                );
+
+
+        if (student == null) {
+
+            System.out.println(
+                    "Student not found."
+            );
+
+            return;
+        }
+
+
+        List<Company> companies =
+                CompanyDAO.getAllCompanies();
+
+
+        if (companies == null ||
+                companies.isEmpty()) {
+
+            System.out.println(
+                    "No companies found."
+            );
+
+            return;
+        }
+
+
+        EligibilityChecker checker =
+                new EligibilityChecker();
+
+
+        boolean foundEligible =
+                false;
+
+
+        System.out.println(
+                "\n===== COMPANIES FOR "
+                        + student.getName()
+                        + " ====="
+        );
+
+
+        for (Company company :
+                companies) {
+
+            String reason =
+                    checker.getEligibilityReason(
+                            student,
+                            company
+                    );
+
+
+            if (reason.equalsIgnoreCase(
+                    "Eligible")) {
+
+                foundEligible = true;
+
+
+                System.out.println(
+                        ": "
+                                + company.getCompanyName()
+                                + " - Eligible"
+                );
+            }
+        }
+
+
+        if (!foundEligible) {
+
+            System.out.println(
+                    "No eligible companies found."
+            );
+        }
     }
 }
