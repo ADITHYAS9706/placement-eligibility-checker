@@ -12,43 +12,35 @@ public class CompanyDAO {
 
     public static List<Company> getAllCompanies() {
 
-        List<Company> companies =
-            new ArrayList<>();
+        List<Company> companies = new ArrayList<>();
 
         String sql =
-            "SELECT id, company_name, min_cgpa, " +
-            "max_backlogs, eligible_branch " +
-            "FROM companies";
+                "SELECT id, company_name, min_cgpa, " +
+                "max_backlogs, eligible_branch " +
+                "FROM companies " +
+                "ORDER BY id";
 
         try (
-            Connection connection =
-                DatabaseConnection.getConnection();
+                Connection connection =
+                        DatabaseConnection.getConnection();
 
-            PreparedStatement statement =
-                connection.prepareStatement(sql);
+                PreparedStatement statement =
+                        connection.prepareStatement(sql);
 
-            ResultSet resultSet =
-                statement.executeQuery()
+                ResultSet resultSet =
+                        statement.executeQuery()
         ) {
 
             while (resultSet.next()) {
 
                 Company company =
-                    new Company(
-                        resultSet.getInt("id"),
-                        resultSet.getString(
-                            "company_name"
-                        ),
-                        resultSet.getDouble(
-                            "min_cgpa"
-                        ),
-                        resultSet.getInt(
-                            "max_backlogs"
-                        ),
-                        resultSet.getString(
-                            "eligible_branch"
-                        )
-                    );
+                        new Company(
+                                resultSet.getInt("id"),
+                                resultSet.getString("company_name"),
+                                resultSet.getDouble("min_cgpa"),
+                                resultSet.getInt("max_backlogs"),
+                                resultSet.getString("eligible_branch")
+                        );
 
                 companies.add(company);
             }
@@ -56,7 +48,7 @@ public class CompanyDAO {
         } catch (Exception e) {
 
             System.out.println(
-                "Failed to load companies."
+                    "Failed to load companies."
             );
 
             e.printStackTrace();
@@ -74,67 +66,64 @@ public class CompanyDAO {
             Company company) {
 
         String sql =
-            "INSERT INTO companies " +
-            "(company_name, min_cgpa, max_backlogs, eligible_branch) " +
-            "VALUES (?, ?, ?, ?)";
+                "INSERT INTO companies " +
+                "(company_name, min_cgpa, max_backlogs, eligible_branch) " +
+                "VALUES (?, ?, ?, ?)";
 
         try (
-            Connection connection =
-                DatabaseConnection.getConnection();
+                Connection connection =
+                        DatabaseConnection.getConnection();
 
-            PreparedStatement statement =
-                connection.prepareStatement(
-                    sql,
-                    java.sql.Statement.RETURN_GENERATED_KEYS
-                )
+                PreparedStatement statement =
+                        connection.prepareStatement(
+                                sql,
+                                java.sql.Statement.RETURN_GENERATED_KEYS
+                        )
         ) {
 
             statement.setString(
-                1,
-                company.getCompanyName()
+                    1,
+                    company.getCompanyName()
             );
 
             statement.setDouble(
-                2,
-                company.getMinimumCgpa()
+                    2,
+                    company.getMinimumCgpa()
             );
 
             statement.setInt(
-                3,
-                company.getMaximumBacklogs()
+                    3,
+                    company.getMaximumBacklogs()
             );
 
             statement.setString(
-                4,
-                company.getEligibleBranch()
+                    4,
+                    company.getEligibleBranch()
             );
-
 
             statement.executeUpdate();
 
-
             ResultSet keys =
-                statement.getGeneratedKeys();
-
+                    statement.getGeneratedKeys();
 
             if (keys.next()) {
 
                 System.out.println(
-                    "Company saved successfully! ID: "
-                    + keys.getInt(1)
+                        "Company saved successfully! ID: "
+                                + keys.getInt(1)
                 );
 
             } else {
 
                 System.out.println(
-                    "Company saved successfully!"
+                        "Company saved successfully!"
                 );
             }
 
         } catch (Exception e) {
 
             System.out.println(
-                "Failed to save company."
+                    "Failed to save company."
             );
 
             e.printStackTrace();
@@ -150,68 +139,66 @@ public class CompanyDAO {
             Company company) {
 
         String sql =
-            "UPDATE companies SET " +
-            "company_name = ?, " +
-            "min_cgpa = ?, " +
-            "max_backlogs = ?, " +
-            "eligible_branch = ? " +
-            "WHERE id = ?";
+                "UPDATE companies SET " +
+                "company_name = ?, " +
+                "min_cgpa = ?, " +
+                "max_backlogs = ?, " +
+                "eligible_branch = ? " +
+                "WHERE id = ?";
 
         try (
-            Connection connection =
-                DatabaseConnection.getConnection();
+                Connection connection =
+                        DatabaseConnection.getConnection();
 
-            PreparedStatement statement =
-                connection.prepareStatement(sql)
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
         ) {
 
             statement.setString(
-                1,
-                company.getCompanyName()
+                    1,
+                    company.getCompanyName()
             );
 
             statement.setDouble(
-                2,
-                company.getMinimumCgpa()
+                    2,
+                    company.getMinimumCgpa()
             );
 
             statement.setInt(
-                3,
-                company.getMaximumBacklogs()
+                    3,
+                    company.getMaximumBacklogs()
             );
 
             statement.setString(
-                4,
-                company.getEligibleBranch()
+                    4,
+                    company.getEligibleBranch()
             );
 
             statement.setInt(
-                5,
-                company.getId()
+                    5,
+                    company.getId()
             );
 
-
             int rows =
-                statement.executeUpdate();
-
+                    statement.executeUpdate();
 
             if (rows > 0) {
 
                 System.out.println(
-                    "Company updated successfully!"
+                        "Company updated successfully!"
                 );
 
             } else {
 
                 System.out.println(
-                    "Company ID not found."
+                        "Company ID not found."
                 );
             }
 
         } catch (Exception e) {
 
             System.out.println(
-                "Failed to update company."
+                    "Failed to update company."
             );
 
             e.printStackTrace();
@@ -227,44 +214,41 @@ public class CompanyDAO {
             int companyId) {
 
         String sql =
-            "DELETE FROM companies WHERE id = ?";
-
+                "DELETE FROM companies WHERE id = ?";
 
         try (
-            Connection connection =
-                DatabaseConnection.getConnection();
+                Connection connection =
+                        DatabaseConnection.getConnection();
 
-            PreparedStatement statement =
-                connection.prepareStatement(sql)
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
         ) {
 
             statement.setInt(
-                1,
-                companyId
+                    1,
+                    companyId
             );
 
-
             int rows =
-                statement.executeUpdate();
-
+                    statement.executeUpdate();
 
             if (rows > 0) {
 
                 System.out.println(
-                    "Company deleted successfully!"
+                        "Company deleted successfully!"
                 );
 
             } else {
 
                 System.out.println(
-                    "Company ID not found."
+                        "Company ID not found."
                 );
             }
 
         } catch (Exception e) {
 
             System.out.println(
-                "Failed to delete company."
+                    "Failed to delete company."
             );
 
             e.printStackTrace();

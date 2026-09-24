@@ -4,10 +4,15 @@ import java.sql.ResultSet;
 
 public class ResultDAO {
 
-    public static void getResultsByStudentId(int studentId) {
+    // =========================
+    // VIEW RESULTS BY STUDENT
+    // =========================
+
+    public static void getResultsByStudentId(
+            int studentId) {
 
         String sql = """
-                SELECT 
+                SELECT
                     c.company_name,
                     er.result,
                     er.reason,
@@ -20,48 +25,93 @@ public class ResultDAO {
                 """;
 
         try (
-            Connection connection = DatabaseConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql)
+                Connection connection =
+                        DatabaseConnection.getConnection();
+
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
         ) {
 
-            statement.setInt(1, studentId);
+            statement.setInt(
+                    1,
+                    studentId
+            );
 
-            ResultSet rs = statement.executeQuery();
+            ResultSet rs =
+                    statement.executeQuery();
 
-            System.out.println("\n===== PREVIOUS ELIGIBILITY RESULTS =====");
+
+            System.out.println(
+                    "\n================================="
+            );
+
+            System.out.println(
+                    "   ELIGIBILITY RESULTS"
+            );
+
+            System.out.println(
+                    "================================="
+            );
+
 
             boolean found = false;
+
 
             while (rs.next()) {
 
                 found = true;
 
+
                 System.out.println(
-                    "Company: " + rs.getString("company_name")
+                        "\nCompany: "
+                                + rs.getString(
+                                "company_name"
+                        )
                 );
 
                 System.out.println(
-                    "Result: " + rs.getString("result")
+                        "Result: "
+                                + rs.getString(
+                                "result"
+                        )
                 );
 
                 System.out.println(
-                    "Reason: " + rs.getString("reason")
+                        "Reason: "
+                                + rs.getString(
+                                "reason"
+                        )
                 );
 
                 System.out.println(
-                    "Checked At: " + rs.getTimestamp("checked_at")
+                        "Checked At: "
+                                + rs.getTimestamp(
+                                "checked_at"
+                        )
                 );
 
-                System.out.println("--------------------------------");
+                System.out.println(
+                        "---------------------------------"
+                );
             }
+
 
             if (!found) {
-                System.out.println("No results found for this student.");
+
+                System.out.println(
+                        "No eligibility results found "
+                                + "for Student ID: "
+                                + studentId
+                );
             }
+
 
         } catch (Exception e) {
 
-            System.out.println("Failed to load results.");
+            System.out.println(
+                    "Failed to load results."
+            );
+
             e.printStackTrace();
         }
     }
