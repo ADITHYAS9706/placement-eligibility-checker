@@ -1,50 +1,127 @@
 public class EligibilityChecker {
 
-    public boolean isEligible(Student student, Company company) {
+    // =========================
+    // CHECK ELIGIBILITY
+    // =========================
 
-        boolean cgpaEligible =
-                student.getCgpa() >= company.getMinimumCgpa();
+    public boolean isEligible(
+            Student student,
+            Company company) {
 
-        boolean backlogEligible =
-                student.getBacklogs() <= company.getMaximumBacklogs();
+        // Check CGPA
+        if (student.getCgpa() <
+            company.getMinimumCgpa()) {
 
-        boolean branchEligible =
-                student.getBranch().equalsIgnoreCase(
-                        company.getEligibleBranch()
-                );
-
-        return cgpaEligible && backlogEligible && branchEligible;
-    }
-
-    public String getEligibilityReason(Student student, Company company) {
-
-        if (student.getCgpa() < company.getMinimumCgpa()) {
-            return "CGPA below required " + company.getMinimumCgpa();
+            return false;
         }
 
-        if (student.getBacklogs() > company.getMaximumBacklogs()) {
+
+        // Check backlogs
+        if (student.getBacklogs() >
+            company.getMaximumBacklogs()) {
+
+            return false;
+        }
+
+
+        // Check branch
+        if (!isBranchEligible(
+                student.getBranch(),
+                company.getEligibleBranch())) {
+
+            return false;
+        }
+
+
+        return true;
+    }
+
+
+    // =========================
+    // GET ELIGIBILITY REASON
+    // =========================
+
+    public String getEligibilityReason(
+            Student student,
+            Company company) {
+
+
+        // CGPA check
+
+        if (student.getCgpa() <
+            company.getMinimumCgpa()) {
+
+            return "CGPA below required "
+                    + company.getMinimumCgpa();
+        }
+
+
+        // Backlog check
+
+        if (student.getBacklogs() >
+            company.getMaximumBacklogs()) {
+
             return "Backlogs exceed allowed limit of "
                     + company.getMaximumBacklogs();
         }
 
-        boolean branchEligible = false;
 
-String[] eligibleBranches =
-        company.getEligibleBranch().split(",");
+        // Branch check
 
-for (String allowedBranch : eligibleBranches) {
+        if (!isBranchEligible(
+                student.getBranch(),
+                company.getEligibleBranch())) {
 
-    if (student.getBranch().trim()
-            .equalsIgnoreCase(allowedBranch.trim())) {
+            return "Branch not eligible";
+        }
 
-        branchEligible = true;
-        break;
-    }
-}
-if (!branchEligible) {
-    return "Branch not eligible";
-}
 
         return "Eligible";
     }
-}
+
+
+    // =========================
+    // BRANCH ELIGIBILITY
+    // =========================
+
+    private boolean isBranchEligible(
+            String studentBranch,
+            String companyBranches) {
+
+
+        if (studentBranch == null ||
+            companyBranches == null) {
+
+            return false;
+        }
+
+
+        String normalizedStudentBranch =
+                studentBranch
+                    .trim()
+                    .toLowerCase();
+
+
+        String[] branches =
+                companyBranches.split(",");
+
+
+        for (String branch : branches) {
+
+            String normalizedCompanyBranch =
+                    branch
+                        .trim()
+                        .toLowerCase();
+
+
+            if (normalizedStudentBranch.equals(
+                    normalizedCompanyBranch)) {
+
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+}git
