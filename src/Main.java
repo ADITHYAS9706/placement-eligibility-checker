@@ -17,7 +17,9 @@ public class Main {
             System.out.println("3. View Eligibility Results");
             System.out.println("4. View Companies");
             System.out.println("5. Add Company");
-            System.out.println("6. Exit");
+            System.out.println("6. Update Company");
+            System.out.println("7. Delete Company");
+            System.out.println("8. Exit");
 
             int choice = readInt(sc, "Enter your choice: ");
 
@@ -44,6 +46,14 @@ public class Main {
                     break;
 
                 case 6:
+                    updateCompany(sc);
+                    break;
+
+                case 7:
+                    deleteCompany(sc);
+                    break;
+
+                case 8:
                     System.out.println(
                         "Thank you for using Placement Eligibility Checker!"
                     );
@@ -52,7 +62,7 @@ public class Main {
 
                 default:
                     System.out.println(
-                        "Invalid choice. Please enter 1 to 6."
+                        "Invalid choice. Please enter 1 to 8."
                     );
             }
         }
@@ -60,10 +70,12 @@ public class Main {
 
 
     // =========================
-    // SAFE INTEGER INPUT
+    // READ INTEGER
     // =========================
 
-    public static int readInt(Scanner sc, String message) {
+    public static int readInt(
+            Scanner sc,
+            String message) {
 
         while (true) {
 
@@ -89,7 +101,7 @@ public class Main {
 
 
     // =========================
-    // SAFE DOUBLE INPUT
+    // READ DOUBLE
     // =========================
 
     public static double readDouble(
@@ -139,7 +151,9 @@ public class Main {
                 break;
             }
 
-            System.out.println("Name cannot be empty.");
+            System.out.println(
+                "Name cannot be empty."
+            );
         }
 
 
@@ -157,7 +171,7 @@ public class Main {
             }
 
             System.out.println(
-                "Invalid CGPA. Please enter a value between 0 and 10."
+                "Invalid CGPA. Enter a value between 0 and 10."
             );
         }
 
@@ -215,7 +229,7 @@ public class Main {
             }
 
             System.out.println(
-                "Please enter a valid graduation year between 2020 and 2035."
+                "Enter a valid graduation year."
             );
         }
 
@@ -230,7 +244,8 @@ public class Main {
 
 
         int studentId =
-                StudentDAO.saveStudent(student);
+            StudentDAO.saveStudent(student);
+
 
         if (studentId != -1) {
 
@@ -245,33 +260,22 @@ public class Main {
     // CHECK ELIGIBILITY
     // =========================
 
-    public static void checkEligibility(Scanner sc) {
+    public static void checkEligibility(
+            Scanner sc) {
 
         System.out.println(
             "\n===== CHECK ELIGIBILITY ====="
         );
 
-        int studentId;
 
-        while (true) {
-
-            studentId = readInt(
-                sc,
-                "Enter Student ID: "
-            );
-
-            if (studentId > 0) {
-                break;
-            }
-
-            System.out.println(
-                "Student ID must be greater than 0."
-            );
-        }
+        int studentId = readInt(
+            sc,
+            "Enter Student ID: "
+        );
 
 
         Student student =
-                StudentDAO.getStudentById(studentId);
+            StudentDAO.getStudentById(studentId);
 
 
         if (student == null) {
@@ -311,7 +315,7 @@ public class Main {
 
 
         List<Company> companies =
-                CompanyDAO.getAllCompanies();
+            CompanyDAO.getAllCompanies();
 
 
         if (companies == null ||
@@ -326,7 +330,7 @@ public class Main {
 
 
         EligibilityChecker checker =
-                new EligibilityChecker();
+            new EligibilityChecker();
 
 
         System.out.println(
@@ -337,10 +341,10 @@ public class Main {
         for (Company company : companies) {
 
             String reason =
-                    checker.getEligibilityReason(
-                        student,
-                        company
-                    );
+                checker.getEligibilityReason(
+                    student,
+                    company
+                );
 
 
             String result;
@@ -376,30 +380,18 @@ public class Main {
     // VIEW RESULTS
     // =========================
 
-    public static void viewResults(Scanner sc) {
+    public static void viewResults(
+            Scanner sc) {
 
         System.out.println(
             "\n===== VIEW ELIGIBILITY RESULTS ====="
         );
 
 
-        int studentId;
-
-        while (true) {
-
-            studentId = readInt(
-                sc,
-                "Enter Student ID: "
-            );
-
-            if (studentId > 0) {
-                break;
-            }
-
-            System.out.println(
-                "Student ID must be greater than 0."
-            );
-        }
+        int studentId = readInt(
+            sc,
+            "Enter Student ID: "
+        );
 
 
         ResultDAO.getResultsByStudentId(
@@ -420,7 +412,7 @@ public class Main {
 
 
         List<Company> companies =
-                CompanyDAO.getAllCompanies();
+            CompanyDAO.getAllCompanies();
 
 
         if (companies == null ||
@@ -437,7 +429,12 @@ public class Main {
         for (Company company : companies) {
 
             System.out.println(
-                "\nCompany: "
+                "\nCompany ID: "
+                + company.getId()
+            );
+
+            System.out.println(
+                "Company: "
                 + company.getCompanyName()
             );
 
@@ -467,89 +464,368 @@ public class Main {
     // ADD COMPANY
     // =========================
 
-    public static void addCompany(Scanner sc) {
+    public static void addCompany(
+            Scanner sc) {
 
-    System.out.println("\n===== ADD COMPANY =====");
+        System.out.println(
+            "\n===== ADD COMPANY ====="
+        );
 
-    String companyName;
 
-    while (true) {
+        String companyName;
 
-        System.out.print("Enter company name: ");
-        companyName = sc.nextLine().trim();
+        while (true) {
 
-        if (!companyName.isEmpty()) {
-            break;
+            System.out.print(
+                "Enter company name: "
+            );
+
+            companyName =
+                sc.nextLine().trim();
+
+            if (!companyName.isEmpty()) {
+                break;
+            }
+
+            System.out.println(
+                "Company name cannot be empty."
+            );
         }
 
-        System.out.println("Company name cannot be empty.");
+
+        double minimumCgpa;
+
+        while (true) {
+
+            minimumCgpa = readDouble(
+                sc,
+                "Enter minimum CGPA (0 - 10): "
+            );
+
+            if (minimumCgpa >= 0 &&
+                minimumCgpa <= 10) {
+
+                break;
+            }
+
+            System.out.println(
+                "CGPA must be between 0 and 10."
+            );
+        }
+
+
+        int maximumBacklogs;
+
+        while (true) {
+
+            maximumBacklogs = readInt(
+                sc,
+                "Enter maximum allowed backlogs: "
+            );
+
+            if (maximumBacklogs >= 0) {
+                break;
+            }
+
+            System.out.println(
+                "Maximum backlogs cannot be negative."
+            );
+        }
+
+
+        String eligibleBranch;
+
+        while (true) {
+
+            System.out.print(
+                "Enter eligible branches: "
+            );
+
+            eligibleBranch =
+                sc.nextLine().trim();
+
+            if (!eligibleBranch.isEmpty()) {
+                break;
+            }
+
+            System.out.println(
+                "Eligible branches cannot be empty."
+            );
+        }
+
+
+        Company company = new Company(
+            0,
+            companyName,
+            minimumCgpa,
+            maximumBacklogs,
+            eligibleBranch
+        );
+
+
+        CompanyDAO.saveCompany(company);
     }
 
 
-    double minimumCgpa;
+    // =========================
+    // UPDATE COMPANY
+    // =========================
 
-    while (true) {
-
-        minimumCgpa =
-                readDouble(sc, "Enter minimum CGPA (0 - 10): ");
-
-        if (minimumCgpa >= 0 && minimumCgpa <= 10) {
-            break;
-        }
+    public static void updateCompany(
+            Scanner sc) {
 
         System.out.println(
-            "Minimum CGPA must be between 0 and 10."
+            "\n===== UPDATE COMPANY ====="
+        );
+
+
+        int companyId = readInt(
+            sc,
+            "Enter Company ID: "
+        );
+
+
+        List<Company> companies =
+            CompanyDAO.getAllCompanies();
+
+
+        Company existingCompany = null;
+
+
+        if (companies != null) {
+
+            for (Company company : companies) {
+
+                if (company.getId() == companyId) {
+
+                    existingCompany = company;
+                    break;
+                }
+            }
+        }
+
+
+        if (existingCompany == null) {
+
+            System.out.println(
+                "Company ID not found."
+            );
+
+            return;
+        }
+
+
+        System.out.println(
+            "\n===== CURRENT COMPANY DETAILS ====="
+        );
+
+        System.out.println(
+            "Company ID: "
+            + existingCompany.getId()
+        );
+
+        System.out.println(
+            "Company Name: "
+            + existingCompany.getCompanyName()
+        );
+
+        System.out.println(
+            "Minimum CGPA: "
+            + existingCompany.getMinimumCgpa()
+        );
+
+        System.out.println(
+            "Maximum Backlogs: "
+            + existingCompany.getMaximumBacklogs()
+        );
+
+        System.out.println(
+            "Eligible Branches: "
+            + existingCompany.getEligibleBranch()
+        );
+
+
+        String companyName;
+
+        while (true) {
+
+            System.out.print(
+                "\nEnter new company name: "
+            );
+
+            companyName =
+                sc.nextLine().trim();
+
+            if (!companyName.isEmpty()) {
+                break;
+            }
+
+            System.out.println(
+                "Company name cannot be empty."
+            );
+        }
+
+
+        double minimumCgpa;
+
+        while (true) {
+
+            minimumCgpa = readDouble(
+                sc,
+                "Enter new minimum CGPA (0 - 10): "
+            );
+
+            if (minimumCgpa >= 0 &&
+                minimumCgpa <= 10) {
+
+                break;
+            }
+
+            System.out.println(
+                "CGPA must be between 0 and 10."
+            );
+        }
+
+
+        int maximumBacklogs;
+
+        while (true) {
+
+            maximumBacklogs = readInt(
+                sc,
+                "Enter new maximum allowed backlogs: "
+            );
+
+            if (maximumBacklogs >= 0) {
+                break;
+            }
+
+            System.out.println(
+                "Maximum backlogs cannot be negative."
+            );
+        }
+
+
+        String eligibleBranch;
+
+        while (true) {
+
+            System.out.print(
+                "Enter new eligible branches: "
+            );
+
+            eligibleBranch =
+                sc.nextLine().trim();
+
+            if (!eligibleBranch.isEmpty()) {
+                break;
+            }
+
+            System.out.println(
+                "Eligible branches cannot be empty."
+            );
+        }
+
+
+        Company updatedCompany =
+            new Company(
+                companyId,
+                companyName,
+                minimumCgpa,
+                maximumBacklogs,
+                eligibleBranch
+            );
+
+
+        CompanyDAO.updateCompany(
+            updatedCompany
         );
     }
 
 
-    int maximumBacklogs;
+    // =========================
+    // DELETE COMPANY
+    // =========================
 
-    while (true) {
-
-        maximumBacklogs =
-                readInt(
-                    sc,
-                    "Enter maximum allowed backlogs: "
-                );
-
-        if (maximumBacklogs >= 0) {
-            break;
-        }
+    public static void deleteCompany(
+            Scanner sc) {
 
         System.out.println(
-            "Maximum backlogs cannot be negative."
+            "\n===== DELETE COMPANY ====="
         );
-    }
 
 
-    String eligibleBranch;
+        int companyId = readInt(
+            sc,
+            "Enter Company ID: "
+        );
 
-    while (true) {
 
-        System.out.print("Enter eligible branches: ");
-        eligibleBranch = sc.nextLine().trim();
+        List<Company> companies =
+            CompanyDAO.getAllCompanies();
 
-        if (!eligibleBranch.isEmpty()) {
-            break;
+
+        Company companyToDelete = null;
+
+
+        if (companies != null) {
+
+            for (Company company : companies) {
+
+                if (company.getId() == companyId) {
+
+                    companyToDelete = company;
+                    break;
+                }
+            }
         }
 
+
+        if (companyToDelete == null) {
+
+            System.out.println(
+                "Company ID not found."
+            );
+
+            return;
+        }
+
+
         System.out.println(
-            "Eligible branches cannot be empty."
+            "\nCompany selected for deletion:"
+        );
+
+        System.out.println(
+            "ID: "
+            + companyToDelete.getId()
+        );
+
+        System.out.println(
+            "Name: "
+            + companyToDelete.getCompanyName()
+        );
+
+
+        System.out.print(
+            "\nAre you sure you want to delete this company? (yes/no): "
+        );
+
+        String confirmation =
+            sc.nextLine().trim();
+
+
+        if (!confirmation.equalsIgnoreCase("yes")) {
+
+            System.out.println(
+                "Delete operation cancelled."
+            );
+
+            return;
+        }
+
+
+        CompanyDAO.deleteCompany(
+            companyId
         );
     }
-
-
-    // ID = 0 because MySQL AUTO_INCREMENT
-    Company company = new Company(
-        0,
-        companyName,
-        minimumCgpa,
-        maximumBacklogs,
-        eligibleBranch
-    );
-
-
-    CompanyDAO.saveCompany(company);
-}
 }

@@ -12,7 +12,8 @@ public class CompanyDAO {
 
     public static List<Company> getAllCompanies() {
 
-        List<Company> companies = new ArrayList<>();
+        List<Company> companies =
+            new ArrayList<>();
 
         String sql =
             "SELECT id, company_name, min_cgpa, " +
@@ -32,13 +33,22 @@ public class CompanyDAO {
 
             while (resultSet.next()) {
 
-                Company company = new Company(
-                    resultSet.getInt("id"),
-                    resultSet.getString("company_name"),
-                    resultSet.getDouble("min_cgpa"),
-                    resultSet.getInt("max_backlogs"),
-                    resultSet.getString("eligible_branch")
-                );
+                Company company =
+                    new Company(
+                        resultSet.getInt("id"),
+                        resultSet.getString(
+                            "company_name"
+                        ),
+                        resultSet.getDouble(
+                            "min_cgpa"
+                        ),
+                        resultSet.getInt(
+                            "max_backlogs"
+                        ),
+                        resultSet.getString(
+                            "eligible_branch"
+                        )
+                    );
 
                 companies.add(company);
             }
@@ -60,7 +70,8 @@ public class CompanyDAO {
     // SAVE COMPANY
     // =========================
 
-    public static void saveCompany(Company company) {
+    public static void saveCompany(
+            Company company) {
 
         String sql =
             "INSERT INTO companies " +
@@ -98,10 +109,13 @@ public class CompanyDAO {
                 company.getEligibleBranch()
             );
 
+
             statement.executeUpdate();
+
 
             ResultSet keys =
                 statement.getGeneratedKeys();
+
 
             if (keys.next()) {
 
@@ -121,6 +135,136 @@ public class CompanyDAO {
 
             System.out.println(
                 "Failed to save company."
+            );
+
+            e.printStackTrace();
+        }
+    }
+
+
+    // =========================
+    // UPDATE COMPANY
+    // =========================
+
+    public static void updateCompany(
+            Company company) {
+
+        String sql =
+            "UPDATE companies SET " +
+            "company_name = ?, " +
+            "min_cgpa = ?, " +
+            "max_backlogs = ?, " +
+            "eligible_branch = ? " +
+            "WHERE id = ?";
+
+        try (
+            Connection connection =
+                DatabaseConnection.getConnection();
+
+            PreparedStatement statement =
+                connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(
+                1,
+                company.getCompanyName()
+            );
+
+            statement.setDouble(
+                2,
+                company.getMinimumCgpa()
+            );
+
+            statement.setInt(
+                3,
+                company.getMaximumBacklogs()
+            );
+
+            statement.setString(
+                4,
+                company.getEligibleBranch()
+            );
+
+            statement.setInt(
+                5,
+                company.getId()
+            );
+
+
+            int rows =
+                statement.executeUpdate();
+
+
+            if (rows > 0) {
+
+                System.out.println(
+                    "Company updated successfully!"
+                );
+
+            } else {
+
+                System.out.println(
+                    "Company ID not found."
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                "Failed to update company."
+            );
+
+            e.printStackTrace();
+        }
+    }
+
+
+    // =========================
+    // DELETE COMPANY
+    // =========================
+
+    public static void deleteCompany(
+            int companyId) {
+
+        String sql =
+            "DELETE FROM companies WHERE id = ?";
+
+
+        try (
+            Connection connection =
+                DatabaseConnection.getConnection();
+
+            PreparedStatement statement =
+                connection.prepareStatement(sql)
+        ) {
+
+            statement.setInt(
+                1,
+                companyId
+            );
+
+
+            int rows =
+                statement.executeUpdate();
+
+
+            if (rows > 0) {
+
+                System.out.println(
+                    "Company deleted successfully!"
+                );
+
+            } else {
+
+                System.out.println(
+                    "Company ID not found."
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                "Failed to delete company."
             );
 
             e.printStackTrace();
