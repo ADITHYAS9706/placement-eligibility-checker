@@ -6,11 +6,11 @@ import java.util.List;
 
 public class StudentDAO {
 
-    // =========================
+    // =====================================================
     // SAVE STUDENT
-    // =========================
+    // =====================================================
 
-    public static int saveStudent(Student student) {
+    public static void saveStudent(Student student) {
 
         String sql =
                 "INSERT INTO students " +
@@ -28,11 +28,30 @@ public class StudentDAO {
                         )
         ) {
 
-            statement.setString(1, student.getName());
-            statement.setDouble(2, student.getCgpa());
-            statement.setInt(3, student.getBacklogs());
-            statement.setString(4, student.getBranch());
-            statement.setInt(5, student.getGraduationYear());
+            statement.setString(
+                    1,
+                    student.getName()
+            );
+
+            statement.setDouble(
+                    2,
+                    student.getCgpa()
+            );
+
+            statement.setInt(
+                    3,
+                    student.getBacklogs()
+            );
+
+            statement.setString(
+                    4,
+                    student.getBranch()
+            );
+
+            statement.setInt(
+                    5,
+                    student.getGraduationYear()
+            );
 
             statement.executeUpdate();
 
@@ -41,17 +60,16 @@ public class StudentDAO {
 
             if (keys.next()) {
 
-                int studentId =
-                        keys.getInt(1);
-
-                student.setId(studentId);
-
                 System.out.println(
                         "Student saved successfully! ID: "
-                                + studentId
+                                + keys.getInt(1)
                 );
 
-                return studentId;
+            } else {
+
+                System.out.println(
+                        "Student saved successfully!"
+                );
             }
 
         } catch (Exception e) {
@@ -62,14 +80,12 @@ public class StudentDAO {
 
             e.printStackTrace();
         }
-
-        return -1;
     }
 
 
-    // =========================
+    // =====================================================
     // GET STUDENT BY ID
-    // =========================
+    // =====================================================
 
     public static Student getStudentById(
             int studentId) {
@@ -77,7 +93,8 @@ public class StudentDAO {
         String sql =
                 "SELECT id, name, cgpa, backlogs, " +
                 "branch, graduation_year " +
-                "FROM students WHERE id = ?";
+                "FROM students " +
+                "WHERE id = ?";
 
         try (
                 Connection connection =
@@ -87,20 +104,23 @@ public class StudentDAO {
                         connection.prepareStatement(sql)
         ) {
 
-            statement.setInt(1, studentId);
+            statement.setInt(
+                    1,
+                    studentId
+            );
 
-            ResultSet resultSet =
+            ResultSet rs =
                     statement.executeQuery();
 
-            if (resultSet.next()) {
+            if (rs.next()) {
 
                 return new Student(
-                        resultSet.getInt("id"),
-                        resultSet.getString("name"),
-                        resultSet.getDouble("cgpa"),
-                        resultSet.getInt("backlogs"),
-                        resultSet.getString("branch"),
-                        resultSet.getInt("graduation_year")
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDouble("cgpa"),
+                        rs.getInt("backlogs"),
+                        rs.getString("branch"),
+                        rs.getInt("graduation_year")
                 );
             }
 
@@ -117,9 +137,9 @@ public class StudentDAO {
     }
 
 
-    // =========================
+    // =====================================================
     // GET ALL STUDENTS
-    // =========================
+    // =====================================================
 
     public static List<Student> getAllStudents() {
 
@@ -129,7 +149,8 @@ public class StudentDAO {
         String sql =
                 "SELECT id, name, cgpa, backlogs, " +
                 "branch, graduation_year " +
-                "FROM students ORDER BY id";
+                "FROM students " +
+                "ORDER BY id";
 
         try (
                 Connection connection =
@@ -138,20 +159,20 @@ public class StudentDAO {
                 PreparedStatement statement =
                         connection.prepareStatement(sql);
 
-                ResultSet resultSet =
+                ResultSet rs =
                         statement.executeQuery()
         ) {
 
-            while (resultSet.next()) {
+            while (rs.next()) {
 
                 Student student =
                         new Student(
-                                resultSet.getInt("id"),
-                                resultSet.getString("name"),
-                                resultSet.getDouble("cgpa"),
-                                resultSet.getInt("backlogs"),
-                                resultSet.getString("branch"),
-                                resultSet.getInt("graduation_year")
+                                rs.getInt("id"),
+                                rs.getString("name"),
+                                rs.getDouble("cgpa"),
+                                rs.getInt("backlogs"),
+                                rs.getString("branch"),
+                                rs.getInt("graduation_year")
                         );
 
                 students.add(student);
@@ -170,11 +191,11 @@ public class StudentDAO {
     }
 
 
-    // =========================
+    // =====================================================
     // UPDATE STUDENT
-    // =========================
+    // =====================================================
 
-    public static boolean updateStudent(
+    public static void updateStudent(
             Student student) {
 
         String sql =
@@ -233,12 +254,12 @@ public class StudentDAO {
                         "Student updated successfully!"
                 );
 
-                return true;
-            }
+            } else {
 
-            System.out.println(
-                    "Student ID not found."
-            );
+                System.out.println(
+                        "Student ID not found."
+                );
+            }
 
         } catch (Exception e) {
 
@@ -248,16 +269,14 @@ public class StudentDAO {
 
             e.printStackTrace();
         }
-
-        return false;
     }
 
 
-    // =========================
+    // =====================================================
     // DELETE STUDENT
-    // =========================
+    // =====================================================
 
-    public static boolean deleteStudent(
+    public static void deleteStudent(
             int studentId) {
 
         String sql =
@@ -285,12 +304,12 @@ public class StudentDAO {
                         "Student deleted successfully!"
                 );
 
-                return true;
-            }
+            } else {
 
-            System.out.println(
-                    "Student ID not found."
-            );
+                System.out.println(
+                        "Student ID not found."
+                );
+            }
 
         } catch (Exception e) {
 
@@ -300,20 +319,15 @@ public class StudentDAO {
 
             e.printStackTrace();
         }
-
-        return false;
     }
 
 
-    // =========================
+    // =====================================================
     // SEARCH STUDENTS BY NAME
-    // =========================
+    // =====================================================
 
-    public static List<Student> searchStudentsByName(
+    public static void searchStudentsByName(
             String name) {
-
-        List<Student> students =
-                new ArrayList<>();
 
         String sql =
                 "SELECT id, name, cgpa, backlogs, " +
@@ -338,17 +352,57 @@ public class StudentDAO {
             ResultSet rs =
                     statement.executeQuery();
 
+            boolean found = false;
+
+            System.out.println(
+                    "\n===== SEARCH RESULTS ====="
+            );
+
             while (rs.next()) {
 
-                students.add(
-                        new Student(
-                                rs.getInt("id"),
-                                rs.getString("name"),
-                                rs.getDouble("cgpa"),
-                                rs.getInt("backlogs"),
-                                rs.getString("branch"),
-                                rs.getInt("graduation_year")
-                        )
+                found = true;
+
+                System.out.println(
+                        "Student ID : "
+                                + rs.getInt("id")
+                );
+
+                System.out.println(
+                        "Name       : "
+                                + rs.getString("name")
+                );
+
+                System.out.println(
+                        "CGPA       : "
+                                + rs.getDouble("cgpa")
+                );
+
+                System.out.println(
+                        "Backlogs   : "
+                                + rs.getInt("backlogs")
+                );
+
+                System.out.println(
+                        "Branch     : "
+                                + rs.getString("branch")
+                );
+
+                System.out.println(
+                        "Graduation : "
+                                + rs.getInt(
+                                        "graduation_year"
+                                )
+                );
+
+                System.out.println(
+                        "-----------------------------"
+                );
+            }
+
+            if (!found) {
+
+                System.out.println(
+                        "No students found."
                 );
             }
 
@@ -360,14 +414,12 @@ public class StudentDAO {
 
             e.printStackTrace();
         }
-
-        return students;
     }
 
 
-    // =========================
+    // =====================================================
     // SEARCH STUDENTS BY BRANCH
-    // =========================
+    // =====================================================
 
     public static List<Student> searchStudentsByBranch(
             String branch) {
@@ -379,7 +431,7 @@ public class StudentDAO {
                 "SELECT id, name, cgpa, backlogs, " +
                 "branch, graduation_year " +
                 "FROM students " +
-                "WHERE LOWER(branch) = LOWER(?) " +
+                "WHERE branch LIKE ? " +
                 "ORDER BY name";
 
         try (
@@ -392,7 +444,7 @@ public class StudentDAO {
 
             statement.setString(
                     1,
-                    branch
+                    "%" + branch + "%"
             );
 
             ResultSet rs =
@@ -400,7 +452,7 @@ public class StudentDAO {
 
             while (rs.next()) {
 
-                students.add(
+                Student student =
                         new Student(
                                 rs.getInt("id"),
                                 rs.getString("name"),
@@ -408,8 +460,9 @@ public class StudentDAO {
                                 rs.getInt("backlogs"),
                                 rs.getString("branch"),
                                 rs.getInt("graduation_year")
-                        )
-                );
+                        );
+
+                students.add(student);
             }
 
         } catch (Exception e) {
@@ -425,9 +478,9 @@ public class StudentDAO {
     }
 
 
-    // =========================
-    // STUDENTS ABOVE CGPA
-    // =========================
+    // =====================================================
+    // GET STUDENTS ABOVE CGPA
+    // =====================================================
 
     public static List<Student> getStudentsAboveCgpa(
             double cgpa) {
@@ -460,7 +513,7 @@ public class StudentDAO {
 
             while (rs.next()) {
 
-                students.add(
+                Student student =
                         new Student(
                                 rs.getInt("id"),
                                 rs.getString("name"),
@@ -468,14 +521,15 @@ public class StudentDAO {
                                 rs.getInt("backlogs"),
                                 rs.getString("branch"),
                                 rs.getInt("graduation_year")
-                        )
-                );
+                        );
+
+                students.add(student);
             }
 
         } catch (Exception e) {
 
             System.out.println(
-                    "Failed to filter students."
+                    "Failed to search students by CGPA."
             );
 
             e.printStackTrace();
