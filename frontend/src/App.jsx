@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-function App() {
+const API_BASE = "http://localhost:8080/api";
 
+function App() {
   // =========================
   // STUDENTS
   // =========================
@@ -61,9 +62,7 @@ function App() {
 
   const loadStudents = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:8080/api/students"
-      );
+      const response = await fetch(`${API_BASE}/students`);
 
       if (!response.ok) {
         throw new Error("Failed to load students");
@@ -76,13 +75,9 @@ function App() {
       if (data.length > 0 && !studentId) {
         setStudentId(String(data[0].id));
       }
-
     } catch (error) {
       console.error(error);
-
-      setMessage(
-        "Could not connect to student backend."
-      );
+      setMessage("Could not connect to student backend.");
     }
   };
 
@@ -92,9 +87,7 @@ function App() {
 
   const loadCompanies = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:8080/api/companies"
-      );
+      const response = await fetch(`${API_BASE}/companies`);
 
       if (!response.ok) {
         throw new Error("Failed to load companies");
@@ -107,13 +100,9 @@ function App() {
       if (data.length > 0 && !companyId) {
         setCompanyId(String(data[0].id));
       }
-
     } catch (error) {
       console.error(error);
-
-      setMessage(
-        "Could not connect to company backend."
-      );
+      setMessage("Could not connect to company backend.");
     }
   };
 
@@ -124,22 +113,18 @@ function App() {
   const loadEligibilityResults = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/eligibility-results"
+        `${API_BASE}/eligibility-results`
       );
 
       if (!response.ok) {
-        throw new Error(
-          "Failed to load eligibility results"
-        );
+        throw new Error("Failed to load eligibility results");
       }
 
       const data = await response.json();
 
       setEligibilityResults(data);
-
     } catch (error) {
       console.error(error);
-
       setMessage(
         "Could not connect to eligibility results backend."
       );
@@ -157,35 +142,27 @@ function App() {
   }, []);
 
   // =========================
-  // FIND STUDENT
+  // FIND STUDENT NAME
   // =========================
 
   const getStudentName = (id) => {
-
     const student = students.find(
-      (student) =>
-        Number(student.id) === Number(id)
+      (student) => Number(student.id) === Number(id)
     );
 
-    return student
-      ? student.name
-      : "Unknown Student";
+    return student ? student.name : "Unknown Student";
   };
 
   // =========================
-  // FIND COMPANY
+  // FIND COMPANY NAME
   // =========================
 
   const getCompanyName = (id) => {
-
     const company = companies.find(
-      (company) =>
-        Number(company.id) === Number(id)
+      (company) => Number(company.id) === Number(id)
     );
 
-    return company
-      ? company.companyName
-      : "Unknown Company";
+    return company ? company.companyName : "Unknown Company";
   };
 
   // =========================
@@ -193,7 +170,6 @@ function App() {
   // =========================
 
   const formatDateTime = (dateValue) => {
-
     if (!dateValue) {
       return "N/A";
     }
@@ -219,21 +195,13 @@ function App() {
   // =========================
 
   const totalStudents = students.length;
-
   const totalCompanies = companies.length;
 
-  // Students who have at least one eligible result
   const eligibleStudentIds = new Set();
-
-  // Students who have been checked at least once
   const checkedStudentIds = new Set();
 
   eligibilityResults.forEach((item) => {
-
-    const result = String(
-      item.result || ""
-    ).toLowerCase();
-
+    const result = String(item.result || "").toLowerCase();
     const id = Number(item.studentId);
 
     if (!id) {
@@ -250,53 +218,31 @@ function App() {
     }
   });
 
-  // =========================
-  // ELIGIBLE STUDENTS
-  // =========================
+  const totalEligible = eligibleStudentIds.size;
 
-  const totalEligible =
-    eligibleStudentIds.size;
-
-  // =========================
-  // NOT ELIGIBLE STUDENTS
-  // =========================
-
-  const notEligibleStudentIds =
-    new Set();
+  const notEligibleStudentIds = new Set();
 
   checkedStudentIds.forEach((id) => {
-
     if (!eligibleStudentIds.has(id)) {
       notEligibleStudentIds.add(id);
     }
-
   });
 
-  const totalNotEligible =
-    notEligibleStudentIds.size;
+  const totalNotEligible = notEligibleStudentIds.size;
 
-  // =========================
-  // PENDING / NOT CHECKED
-  // =========================
-
-  const totalPending =
-    Math.max(
-      0,
-      totalStudents -
-      totalEligible -
-      totalNotEligible
-    );
+  const totalPending = Math.max(
+    0,
+    totalStudents - totalEligible - totalNotEligible
+  );
 
   // =========================
   // STUDENT INPUT
   // =========================
 
   const handleStudentChange = (event) => {
-
     setStudentForm({
       ...studentForm,
-      [event.target.name]:
-        event.target.value,
+      [event.target.name]: event.target.value,
     });
   };
 
@@ -305,7 +251,6 @@ function App() {
   // =========================
 
   const handleStudentSubmit = async (event) => {
-
     event.preventDefault();
 
     setMessage("");
@@ -315,35 +260,27 @@ function App() {
       cgpa: Number(studentForm.cgpa),
       backlogs: Number(studentForm.backlogs),
       branch: studentForm.branch,
-      graduationYear: Number(
-        studentForm.graduationYear
-      ),
+      graduationYear: Number(studentForm.graduationYear),
     };
 
     try {
-
       if (editingStudentId !== null) {
-
         const response = await fetch(
-          `http://localhost:8080/api/students/${editingStudentId}`,
+          `${API_BASE}/students/${editingStudentId}`,
           {
             method: "PUT",
             headers: {
-              "Content-Type":
-                "application/json",
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(studentData),
           }
         );
 
         if (!response.ok) {
-          throw new Error(
-            "Failed to update student"
-          );
+          throw new Error("Failed to update student");
         }
 
-        const updatedStudent =
-          await response.json();
+        const updatedStudent = await response.json();
 
         setStudents(
           students.map((student) =>
@@ -353,47 +290,29 @@ function App() {
           )
         );
 
-        setMessage(
-          "Student updated successfully!"
-        );
+        setMessage("Student updated successfully!");
 
         setEditingStudentId(null);
-
       } else {
-
-        const response = await fetch(
-          "http://localhost:8080/api/students",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify(studentData),
-          }
-        );
+        const response = await fetch(`${API_BASE}/students`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(studentData),
+        });
 
         if (!response.ok) {
-          throw new Error(
-            "Failed to add student"
-          );
+          throw new Error("Failed to add student");
         }
 
-        const newStudent =
-          await response.json();
+        const newStudent = await response.json();
 
-        setStudents([
-          ...students,
-          newStudent,
-        ]);
+        setStudents([...students, newStudent]);
 
-        setStudentId(
-          String(newStudent.id)
-        );
+        setStudentId(String(newStudent.id));
 
-        setMessage(
-          "Student added successfully!"
-        );
+        setMessage("Student added successfully!");
       }
 
       setStudentForm({
@@ -403,9 +322,7 @@ function App() {
         branch: "",
         graduationYear: "",
       });
-
     } catch (error) {
-
       console.error(error);
 
       setMessage(
@@ -421,7 +338,6 @@ function App() {
   // =========================
 
   const handleEditStudent = (student) => {
-
     setEditingStudentId(student.id);
 
     setStudentForm({
@@ -429,8 +345,7 @@ function App() {
       cgpa: student.cgpa,
       backlogs: student.backlogs,
       branch: student.branch,
-      graduationYear:
-        student.graduationYear,
+      graduationYear: student.graduationYear,
     });
 
     setMessage("");
@@ -441,7 +356,6 @@ function App() {
   // =========================
 
   const cancelStudentEdit = () => {
-
     setEditingStudentId(null);
 
     setStudentForm({
@@ -460,7 +374,6 @@ function App() {
   // =========================
 
   const handleDeleteStudent = async (id) => {
-
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this student?"
     );
@@ -470,58 +383,37 @@ function App() {
     }
 
     try {
-
       const response = await fetch(
-        `http://localhost:8080/api/students/${id}`,
+        `${API_BASE}/students/${id}`,
         {
           method: "DELETE",
         }
       );
 
       if (!response.ok) {
-        throw new Error(
-          "Failed to delete student"
-        );
+        throw new Error("Failed to delete student");
       }
 
-      const updatedStudents =
-        students.filter(
-          (student) =>
-            student.id !== id
-        );
+      const updatedStudents = students.filter(
+        (student) => student.id !== id
+      );
 
       setStudents(updatedStudents);
 
-      if (
-        Number(studentId) === Number(id)
-      ) {
-
+      if (Number(studentId) === Number(id)) {
         if (updatedStudents.length > 0) {
-
-          setStudentId(
-            String(
-              updatedStudents[0].id
-            )
-          );
-
+          setStudentId(String(updatedStudents[0].id));
         } else {
-
           setStudentId("");
-
         }
       }
 
-      setMessage(
-        "Student deleted successfully!"
-      );
+      setMessage("Student deleted successfully!");
 
+      await loadEligibilityResults();
     } catch (error) {
-
       console.error(error);
-
-      setMessage(
-        "Failed to delete student."
-      );
+      setMessage("Failed to delete student.");
     }
   };
 
@@ -530,11 +422,9 @@ function App() {
   // =========================
 
   const handleCompanyChange = (event) => {
-
     setCompanyForm({
       ...companyForm,
-      [event.target.name]:
-        event.target.value,
+      [event.target.name]: event.target.value,
     });
   };
 
@@ -543,53 +433,36 @@ function App() {
   // =========================
 
   const handleCompanySubmit = async (event) => {
-
     event.preventDefault();
 
     setMessage("");
 
     const companyData = {
-
-      companyName:
-        companyForm.companyName,
-
-      minCgpa:
-        Number(companyForm.minCgpa),
-
-      maxBacklogs:
-        Number(companyForm.maxBacklogs),
-
-      eligibleBranch:
-        companyForm.eligibleBranch,
-
-      graduationYear:
-        Number(companyForm.graduationYear),
+      companyName: companyForm.companyName,
+      minCgpa: Number(companyForm.minCgpa),
+      maxBacklogs: Number(companyForm.maxBacklogs),
+      eligibleBranch: companyForm.eligibleBranch,
+      graduationYear: Number(companyForm.graduationYear),
     };
 
     try {
-
       if (editingCompanyId !== null) {
-
         const response = await fetch(
-          `http://localhost:8080/api/companies/${editingCompanyId}`,
+          `${API_BASE}/companies/${editingCompanyId}`,
           {
             method: "PUT",
             headers: {
-              "Content-Type":
-                "application/json",
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(companyData),
           }
         );
 
         if (!response.ok) {
-          throw new Error(
-            "Failed to update company"
-          );
+          throw new Error("Failed to update company");
         }
 
-        const updatedCompany =
-          await response.json();
+        const updatedCompany = await response.json();
 
         setCompanies(
           companies.map((company) =>
@@ -599,47 +472,29 @@ function App() {
           )
         );
 
-        setMessage(
-          "Company updated successfully!"
-        );
+        setMessage("Company updated successfully!");
 
         setEditingCompanyId(null);
-
       } else {
-
-        const response = await fetch(
-          "http://localhost:8080/api/companies",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify(companyData),
-          }
-        );
+        const response = await fetch(`${API_BASE}/companies`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(companyData),
+        });
 
         if (!response.ok) {
-          throw new Error(
-            "Failed to add company"
-          );
+          throw new Error("Failed to add company");
         }
 
-        const newCompany =
-          await response.json();
+        const newCompany = await response.json();
 
-        setCompanies([
-          ...companies,
-          newCompany,
-        ]);
+        setCompanies([...companies, newCompany]);
 
-        setCompanyId(
-          String(newCompany.id)
-        );
+        setCompanyId(String(newCompany.id));
 
-        setMessage(
-          "Company added successfully!"
-        );
+        setMessage("Company added successfully!");
       }
 
       setCompanyForm({
@@ -649,9 +504,7 @@ function App() {
         eligibleBranch: "",
         graduationYear: "",
       });
-
     } catch (error) {
-
       console.error(error);
 
       setMessage(
@@ -667,18 +520,14 @@ function App() {
   // =========================
 
   const handleEditCompany = (company) => {
-
     setEditingCompanyId(company.id);
 
     setCompanyForm({
       companyName: company.companyName,
       minCgpa: company.minCgpa,
-      maxBacklogs:
-        company.maxBacklogs,
-      eligibleBranch:
-        company.eligibleBranch,
-      graduationYear:
-        company.graduationYear,
+      maxBacklogs: company.maxBacklogs,
+      eligibleBranch: company.eligibleBranch,
+      graduationYear: company.graduationYear,
     });
 
     setMessage("");
@@ -689,7 +538,6 @@ function App() {
   // =========================
 
   const cancelCompanyEdit = () => {
-
     setEditingCompanyId(null);
 
     setCompanyForm({
@@ -708,7 +556,6 @@ function App() {
   // =========================
 
   const handleDeleteCompany = async (id) => {
-
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this company?"
     );
@@ -718,58 +565,37 @@ function App() {
     }
 
     try {
-
       const response = await fetch(
-        `http://localhost:8080/api/companies/${id}`,
+        `${API_BASE}/companies/${id}`,
         {
           method: "DELETE",
         }
       );
 
       if (!response.ok) {
-        throw new Error(
-          "Failed to delete company"
-        );
+        throw new Error("Failed to delete company");
       }
 
-      const updatedCompanies =
-        companies.filter(
-          (company) =>
-            company.id !== id
-        );
+      const updatedCompanies = companies.filter(
+        (company) => company.id !== id
+      );
 
       setCompanies(updatedCompanies);
 
-      if (
-        Number(companyId) === Number(id)
-      ) {
-
+      if (Number(companyId) === Number(id)) {
         if (updatedCompanies.length > 0) {
-
-          setCompanyId(
-            String(
-              updatedCompanies[0].id
-            )
-          );
-
+          setCompanyId(String(updatedCompanies[0].id));
         } else {
-
           setCompanyId("");
-
         }
       }
 
-      setMessage(
-        "Company deleted successfully!"
-      );
+      setMessage("Company deleted successfully!");
 
+      await loadEligibilityResults();
     } catch (error) {
-
       console.error(error);
-
-      setMessage(
-        "Failed to delete company."
-      );
+      setMessage("Failed to delete company.");
     }
   };
 
@@ -778,13 +604,10 @@ function App() {
   // =========================
 
   const handleCheckEligibility = async () => {
-
     if (!studentId || !companyId) {
-
       setEligibilityResult(
         "Please select a student and company."
       );
-
       return;
     }
 
@@ -792,27 +615,21 @@ function App() {
     setMessage("");
 
     try {
-
       const response = await fetch(
-        `http://localhost:8080/api/eligibility?studentId=${studentId}&companyId=${companyId}`
+        `${API_BASE}/eligibility?studentId=${studentId}&companyId=${companyId}`
       );
 
-      const result =
-        await response.text();
+      const result = await response.text();
 
       if (!response.ok) {
-
         setEligibilityResult(result);
-
         return;
       }
 
       setEligibilityResult(result);
 
       await loadEligibilityResults();
-
     } catch (error) {
-
       console.error(error);
 
       setEligibilityResult(
@@ -826,16 +643,12 @@ function App() {
   // =========================
 
   const getResultStyle = (result) => {
-
-    const text = String(
-      result || ""
-    ).toLowerCase();
+    const text = String(result || "").toLowerCase();
 
     if (
       text.includes("eligible") &&
       !text.includes("not eligible")
     ) {
-
       return {
         color: "#15803d",
         fontWeight: "bold",
@@ -858,22 +671,18 @@ function App() {
     description,
     valueColor,
   }) => {
-
     return (
-
       <div
         style={{
           background: "#ffffff",
           border: "1px solid #e5e7eb",
           borderRadius: "12px",
           padding: "22px",
-          boxShadow:
-            "0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
           flex: "1 1 200px",
           minWidth: "200px",
         }}
       >
-
         <p
           style={{
             margin: "0 0 8px 0",
@@ -905,7 +714,6 @@ function App() {
         >
           {description}
         </p>
-
       </div>
     );
   };
@@ -915,21 +723,16 @@ function App() {
   // =========================
 
   return (
-
     <div className="app">
 
       {/* HEADER */}
 
       <header className="header">
-
-        <h1>
-          Placement Eligibility Checker
-        </h1>
+        <h1>Placement Eligibility Checker</h1>
 
         <p>
           Student Placement Management System
         </p>
-
       </header>
 
       {/* MESSAGE */}
@@ -944,10 +747,11 @@ function App() {
 
       <section
         style={{
-          marginBottom: "30px",
+          width: "90%",
+          maxWidth: "1100px",
+          margin: "30px auto",
         }}
       >
-
         <h2
           style={{
             marginBottom: "15px",
@@ -963,7 +767,6 @@ function App() {
             flexWrap: "wrap",
           }}
         >
-
           <DashboardCard
             title="Total Students"
             value={totalStudents}
@@ -998,25 +801,19 @@ function App() {
             description="Students not checked yet"
             valueColor="#ea580c"
           />
-
         </div>
-
       </section>
 
       {/* STUDENT SECTION */}
 
       <section className="card">
-
         <h2>
           {editingStudentId !== null
             ? "Edit Student"
             : "Add Student"}
         </h2>
 
-        <form
-          onSubmit={handleStudentSubmit}
-        >
-
+        <form onSubmit={handleStudentSubmit}>
           <input
             type="text"
             name="name"
@@ -1067,52 +864,34 @@ function App() {
           />
 
           <button type="submit">
-
             {editingStudentId !== null
               ? "Update Student"
               : "Add Student"}
-
           </button>
 
           {editingStudentId !== null && (
-
             <button
               type="button"
               onClick={cancelStudentEdit}
             >
               Cancel
             </button>
-
           )}
-
         </form>
-
       </section>
 
       {/* STUDENT LIST */}
 
       <section className="card">
-
-        <h2>
-          Students
-        </h2>
+        <h2>Students</h2>
 
         {students.length === 0 ? (
-
-          <p>
-            No students found.
-          </p>
-
+          <p>No students found.</p>
         ) : (
-
           <div className="table-container">
-
             <table>
-
               <thead>
-
                 <tr>
-
                   <th>ID</th>
                   <th>Name</th>
                   <th>CGPA</th>
@@ -1120,48 +899,30 @@ function App() {
                   <th>Branch</th>
                   <th>Graduation Year</th>
                   <th>Actions</th>
-
                 </tr>
-
               </thead>
 
               <tbody>
-
                 {students.map((student) => (
-
                   <tr key={student.id}>
+                    <td>{student.id}</td>
 
-                    <td>
-                      {student.id}
-                    </td>
+                    <td>{student.name}</td>
 
-                    <td>
-                      {student.name}
-                    </td>
+                    <td>{student.cgpa}</td>
 
-                    <td>
-                      {student.cgpa}
-                    </td>
+                    <td>{student.backlogs}</td>
 
-                    <td>
-                      {student.backlogs}
-                    </td>
-
-                    <td>
-                      {student.branch}
-                    </td>
+                    <td>{student.branch}</td>
 
                     <td>
                       {student.graduationYear}
                     </td>
 
                     <td>
-
                       <button
                         onClick={() =>
-                          handleEditStudent(
-                            student
-                          )
+                          handleEditStudent(student)
                         }
                       >
                         Edit
@@ -1176,37 +937,25 @@ function App() {
                       >
                         Delete
                       </button>
-
                     </td>
-
                   </tr>
-
                 ))}
-
               </tbody>
-
             </table>
-
           </div>
-
         )}
-
       </section>
 
       {/* COMPANY SECTION */}
 
       <section className="card">
-
         <h2>
           {editingCompanyId !== null
             ? "Edit Company"
             : "Add Company"}
         </h2>
 
-        <form
-          onSubmit={handleCompanySubmit}
-        >
-
+        <form onSubmit={handleCompanySubmit}>
           <input
             type="text"
             name="companyName"
@@ -1257,52 +1006,34 @@ function App() {
           />
 
           <button type="submit">
-
             {editingCompanyId !== null
               ? "Update Company"
               : "Add Company"}
-
           </button>
 
           {editingCompanyId !== null && (
-
             <button
               type="button"
               onClick={cancelCompanyEdit}
             >
               Cancel
             </button>
-
           )}
-
         </form>
-
       </section>
 
       {/* COMPANY LIST */}
 
       <section className="card">
-
-        <h2>
-          Companies
-        </h2>
+        <h2>Companies</h2>
 
         {companies.length === 0 ? (
-
-          <p>
-            No companies found.
-          </p>
-
+          <p>No companies found.</p>
         ) : (
-
           <div className="table-container">
-
             <table>
-
               <thead>
-
                 <tr>
-
                   <th>ID</th>
                   <th>Company</th>
                   <th>Min CGPA</th>
@@ -1310,48 +1041,30 @@ function App() {
                   <th>Eligible Branch</th>
                   <th>Graduation Year</th>
                   <th>Actions</th>
-
                 </tr>
-
               </thead>
 
               <tbody>
-
                 {companies.map((company) => (
-
                   <tr key={company.id}>
+                    <td>{company.id}</td>
 
-                    <td>
-                      {company.id}
-                    </td>
+                    <td>{company.companyName}</td>
 
-                    <td>
-                      {company.companyName}
-                    </td>
+                    <td>{company.minCgpa}</td>
 
-                    <td>
-                      {company.minCgpa}
-                    </td>
+                    <td>{company.maxBacklogs}</td>
 
-                    <td>
-                      {company.maxBacklogs}
-                    </td>
-
-                    <td>
-                      {company.eligibleBranch}
-                    </td>
+                    <td>{company.eligibleBranch}</td>
 
                     <td>
                       {company.graduationYear}
                     </td>
 
                     <td>
-
                       <button
                         onClick={() =>
-                          handleEditCompany(
-                            company
-                          )
+                          handleEditCompany(company)
                         }
                       >
                         Edit
@@ -1366,47 +1079,31 @@ function App() {
                       >
                         Delete
                       </button>
-
                     </td>
-
                   </tr>
-
                 ))}
-
               </tbody>
-
             </table>
-
           </div>
-
         )}
-
       </section>
 
       {/* ELIGIBILITY CHECK */}
 
       <section className="card">
-
-        <h2>
-          Check Placement Eligibility
-        </h2>
+        <h2>Check Placement Eligibility</h2>
 
         <p>
-          Select a student and company to
-          check whether the student is
-          eligible.
+          Select a student and company to check
+          whether the student is eligible.
         </p>
 
         <select
           value={studentId}
           onChange={(event) =>
-            setStudentId(
-              event.target.value
-            )
+            setStudentId(event.target.value)
           }
-          disabled={
-            students.length === 0
-          }
+          disabled={students.length === 0}
           style={{
             width: "100%",
             padding: "12px",
@@ -1417,35 +1114,26 @@ function App() {
             boxSizing: "border-box",
           }}
         >
-
           <option value="">
             Select Student
           </option>
 
           {students.map((student) => (
-
             <option
               key={student.id}
               value={student.id}
             >
-              {student.name} — ID{" "}
-              {student.id}
+              {student.name} — ID {student.id}
             </option>
-
           ))}
-
         </select>
 
         <select
           value={companyId}
           onChange={(event) =>
-            setCompanyId(
-              event.target.value
-            )
+            setCompanyId(event.target.value)
           }
-          disabled={
-            companies.length === 0
-          }
+          disabled={companies.length === 0}
           style={{
             width: "100%",
             padding: "12px",
@@ -1456,23 +1144,18 @@ function App() {
             boxSizing: "border-box",
           }}
         >
-
           <option value="">
             Select Company
           </option>
 
           {companies.map((company) => (
-
             <option
               key={company.id}
               value={company.id}
             >
-              {company.companyName} — ID{" "}
-              {company.id}
+              {company.companyName} — ID {company.id}
             </option>
-
           ))}
-
         </select>
 
         <button
@@ -1488,12 +1171,8 @@ function App() {
         </button>
 
         {eligibilityResult && (
-
           <div className="message">
-
-            <h3>
-              Eligibility Result
-            </h3>
+            <h3>Eligibility Result</h3>
 
             <p
               style={getResultStyle(
@@ -1502,138 +1181,96 @@ function App() {
             >
               {eligibilityResult}
             </p>
-
           </div>
-
         )}
-
       </section>
 
       {/* ELIGIBILITY RESULTS */}
 
       <section className="card">
-
-        <h2>
-          Eligibility Results
-        </h2>
+        <h2>Eligibility Results</h2>
 
         {eligibilityResults.length === 0 ? (
-
-          <p>
-            No eligibility results found.
-          </p>
-
+          <p>No eligibility results found.</p>
         ) : (
-
           <div className="table-container">
-
             <table>
-
               <thead>
-
                 <tr>
-
                   <th>ID</th>
                   <th>Student</th>
                   <th>Company</th>
                   <th>Result</th>
                   <th>Reason</th>
                   <th>Checked At</th>
-
                 </tr>
-
               </thead>
 
               <tbody>
+                {eligibilityResults.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
 
-                {eligibilityResults.map(
-                  (item) => (
-
-                    <tr key={item.id}>
-
-                      <td>
-                        {item.id}
-                      </td>
-
-                      <td>
-
-                        <strong>
-                          {getStudentName(
-                            item.studentId
-                          )}
-                        </strong>
-
-                        <br />
-
-                        <small>
-                          ID:{" "}
-                          {item.studentId}
-                        </small>
-
-                      </td>
-
-                      <td>
-
-                        <strong>
-                          {getCompanyName(
-                            item.companyId
-                          )}
-                        </strong>
-
-                        <br />
-
-                        <small>
-                          ID:{" "}
-                          {item.companyId}
-                        </small>
-
-                      </td>
-
-                      <td>
-
-                        <span
-                          style={{
-                            ...getResultStyle(
-                              item.result
-                            ),
-                            padding:
-                              "6px 10px",
-                            borderRadius:
-                              "6px",
-                          }}
-                        >
-                          {item.result}
-                        </span>
-
-                      </td>
-
-                      <td>
-                        {item.reason
-                          ? item.reason
-                          : "No reason available"}
-                      </td>
-
-                      <td>
-                        {formatDateTime(
-                          item.checkedAt
+                    <td>
+                      <strong>
+                        {getStudentName(
+                          item.studentId
                         )}
-                      </td>
+                      </strong>
 
-                    </tr>
+                      <br />
 
-                  )
-                )}
+                      <small>
+                        ID: {item.studentId}
+                      </small>
+                    </td>
 
+                    <td>
+                      <strong>
+                        {getCompanyName(
+                          item.companyId
+                        )}
+                      </strong>
+
+                      <br />
+
+                      <small>
+                        ID: {item.companyId}
+                      </small>
+                    </td>
+
+                    <td>
+                      <span
+                        style={{
+                          ...getResultStyle(
+                            item.result
+                          ),
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                        }}
+                      >
+                        {item.result}
+                      </span>
+                    </td>
+
+                    <td>
+                      {item.reason
+                        ? item.reason
+                        : "No reason available"}
+                    </td>
+
+                    <td>
+                      {formatDateTime(
+                        item.checkedAt
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
-
             </table>
-
           </div>
-
         )}
-
       </section>
-
     </div>
   );
 }
