@@ -15,105 +15,105 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import placement_api.model.Student;
-import placement_api.service.StudentService;
+import placement_api.model.Company;
+import placement_api.service.CompanyService;
 
 @RestController
-@RequestMapping("/api/students")
+@RequestMapping("/api/companies")
 @CrossOrigin(origins = "http://localhost:5173")
-public class StudentController {
+public class CompanyController {
 
-    private final StudentService studentService;
+    private final CompanyService companyService;
 
-    public StudentController(StudentService studentService) {
-        this.studentService = studentService;
+    public CompanyController(CompanyService companyService) {
+        this.companyService = companyService;
     }
 
     // =========================
-    // GET ALL STUDENTS
+    // GET ALL COMPANIES
     // =========================
 
     @GetMapping
-    public ResponseEntity<List<Student>> getAllStudents() {
+    public ResponseEntity<List<Company>> getAllCompanies() {
 
-        List<Student> students =
-                studentService.getAllStudents();
+        List<Company> companies =
+                companyService.getAllCompanies();
 
-        return ResponseEntity.ok(students);
+        return ResponseEntity.ok(companies);
     }
 
     // =========================
-    // GET STUDENT BY ID
+    // GET COMPANY BY ID
     // =========================
 
     @GetMapping("/{id}")
-    public ResponseEntity<Student> getStudentById(
+    public ResponseEntity<Company> getCompanyById(
             @PathVariable int id) {
 
-        Optional<Student> student =
-                studentService.getStudentById(id);
+        Optional<Company> company =
+                companyService.getCompanyById(id);
 
-        if (student.isPresent()) {
-            return ResponseEntity.ok(student.get());
+        if (company.isPresent()) {
+            return ResponseEntity.ok(company.get());
         }
 
         return ResponseEntity.notFound().build();
     }
 
     // =========================
-    // ADD STUDENT
+    // ADD COMPANY
     // =========================
 
     @PostMapping
-    public ResponseEntity<Student> addStudent(
-            @RequestBody Student student) {
+    public ResponseEntity<Company> addCompany(
+            @RequestBody Company company) {
 
-        Student savedStudent =
-                studentService.saveStudent(student);
+        Company savedCompany =
+                companyService.saveCompany(company);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedStudent);
+                .body(savedCompany);
     }
 
     // =========================
-    // UPDATE STUDENT
+    // UPDATE COMPANY
     // =========================
 
     @PutMapping("/{id}")
-    public ResponseEntity<Student> updateStudent(
+    public ResponseEntity<Company> updateCompany(
             @PathVariable int id,
-            @RequestBody Student student) {
+            @RequestBody Company company) {
 
-        Student updatedStudent =
-                studentService.updateStudent(id, student);
+        Company updatedCompany =
+                companyService.updateCompany(id, company);
 
-        if (updatedStudent != null) {
-            return ResponseEntity.ok(updatedStudent);
+        if (updatedCompany != null) {
+            return ResponseEntity.ok(updatedCompany);
         }
 
         return ResponseEntity.notFound().build();
     }
 
     // =========================
-    // DELETE STUDENT
+    // DELETE COMPANY
     // =========================
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteStudent(
+    public ResponseEntity<String> deleteCompany(
             @PathVariable int id) {
 
         boolean deleted =
-                studentService.deleteStudent(id);
+                companyService.deleteCompany(id);
 
         if (deleted) {
             return ResponseEntity.ok(
-                    "Student deleted successfully!"
+                    "Company deleted successfully!"
             );
         }
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body("Student not found.");
+                .body("Company not found.");
     }
 }
