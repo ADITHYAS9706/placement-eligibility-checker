@@ -2,8 +2,10 @@ package placement_api.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +39,97 @@ public class ReportController {
     }
 
     // ==========================================
+    // DASHBOARD SUMMARY
+    // ==========================================
+
+    @GetMapping("/summary")
+    public Map<String, Object> getDashboardSummary() {
+
+        List<Student> students =
+                studentRepository.findAll();
+
+        List<Company> companies =
+                companyRepository.findAll();
+
+        List<EligibilityResult> results =
+                eligibilityResultRepository.findAll();
+
+        // Students who have at least one eligible company
+        Set<Integer> eligibleStudents =
+                new HashSet<>();
+
+        // Students who have been checked
+        Set<Integer> checkedStudents =
+                new HashSet<>();
+
+        // Process every eligibility result
+        for (EligibilityResult result : results) {
+
+            int studentId =
+                    result.getStudentId();
+
+            checkedStudents.add(studentId);
+
+            String resultText =
+                    String.valueOf(
+                            result.getResult()
+                    ).toLowerCase();
+
+            boolean eligible =
+                    resultText.contains("eligible")
+                    && !resultText.contains("not eligible");
+
+            if (eligible) {
+                eligibleStudents.add(studentId);
+            }
+        }
+
+        // Students who have been checked but have
+        // no eligible company
+        Set<Integer> notEligibleStudents =
+                new HashSet<>(checkedStudents);
+
+        notEligibleStudents.removeAll(
+                eligibleStudents
+        );
+
+        // Students who have never been checked
+        int pendingStudents =
+                students.size()
+                - checkedStudents.size();
+
+        Map<String, Object> summary =
+                new HashMap<>();
+
+        summary.put(
+                "totalStudents",
+                students.size()
+        );
+
+        summary.put(
+                "totalCompanies",
+                companies.size()
+        );
+
+        summary.put(
+                "eligibleStudents",
+                eligibleStudents.size()
+        );
+
+        summary.put(
+                "notEligibleStudents",
+                notEligibleStudents.size()
+        );
+
+        summary.put(
+                "pendingStudents",
+                pendingStudents
+        );
+
+        return summary;
+    }
+
+    // ==========================================
     // STUDENT PLACEMENT REPORT
     // ==========================================
 
@@ -55,16 +148,14 @@ public class ReportController {
         List<Map<String, Object>> report =
                 new ArrayList<>();
 
-        // ==========================================
-        // CREATE REPORT FOR EACH STUDENT
-        // ==========================================
-
+        // Create report for each student
         for (Student student : students) {
 
             Map<String, Object> studentReport =
                     new HashMap<>();
 
-            int studentId = student.getId();
+            int studentId =
+                    student.getId();
 
             studentReport.put(
                     "studentId",
@@ -128,8 +219,8 @@ public class ReportController {
 
                 for (Company company : companies) {
 
-                    if (company.getId() ==
-                            result.getCompanyId()) {
+                    if (company.getId()
+                            == result.getCompanyId()) {
 
                         companyName =
                                 company.getCompanyName();
@@ -170,8 +261,11 @@ public class ReportController {
                         );
 
                 if (eligible) {
+
                     eligibleCount++;
+
                 } else {
+
                     notEligibleCount++;
                 }
 
@@ -181,7 +275,7 @@ public class ReportController {
             }
 
             // ==========================================
-            // ADD COUNTS
+            // COUNTS
             // ==========================================
 
             studentReport.put(
@@ -212,15 +306,18 @@ public class ReportController {
 
             if (checkedCount == 0) {
 
-                overallStatus = "Not Checked";
+                overallStatus =
+                        "Not Checked";
 
             } else if (eligibleCount > 0) {
 
-                overallStatus = "Eligible";
+                overallStatus =
+                        "Eligible";
 
             } else {
 
-                overallStatus = "Not Eligible";
+                overallStatus =
+                        "Not Eligible";
             }
 
             studentReport.put(

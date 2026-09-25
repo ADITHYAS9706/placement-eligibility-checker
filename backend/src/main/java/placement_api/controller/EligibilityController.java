@@ -1,6 +1,9 @@
 package placement_api.controller;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -39,9 +42,9 @@ public class EligibilityController {
         this.eligibilityResultService = eligibilityResultService;
     }
 
-    // =========================
-    // CHECK ONE STUDENT
-    // =========================
+    // =========================================================
+    // CHECK ONE STUDENT FOR ONE COMPANY
+    // =========================================================
 
     @GetMapping
     public ResponseEntity<String> checkEligibility(
@@ -86,9 +89,142 @@ public class EligibilityController {
         return ResponseEntity.ok(result);
     }
 
-    // =========================
-    // CHECK ALL STUDENTS
-    // =========================
+
+    // =========================================================
+    // CHECK ONE STUDENT FOR ALL COMPANIES
+    // =========================================================
+
+    @GetMapping("/student/all")
+    public ResponseEntity<?> checkStudentForAllCompanies(
+            @RequestParam int studentId) {
+
+        // Find student
+        Optional<Student> studentOptional =
+                studentRepository.findById(studentId);
+
+        if (studentOptional.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Student not found.");
+        }
+
+        Student student = studentOptional.get();
+
+        // Get all companies
+        List<Company> companies =
+                companyRepository.findAll();
+
+        if (companies.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("No companies found.");
+        }
+
+        // Store results
+        List<Map<String, Object>> results =
+                new ArrayList<>();
+
+        int eligibleCount = 0;
+        int notEligibleCount = 0;
+
+        // Check student against every company
+        for (Company company : companies) {
+
+            String result =
+                    eligibilityService.checkEligibility(
+                            student,
+                            company
+                    );
+
+            // Save result
+            eligibilityResultService.saveResult(
+                    student.getId(),
+                    company.getId(),
+                    result
+            );
+
+            // Determine status
+            String lowerResult =
+                    result.toLowerCase();
+
+            boolean eligible =
+                    lowerResult.contains("eligible")
+                    && !lowerResult.contains("not eligible");
+
+            if (eligible) {
+                eligibleCount++;
+            } else {
+                notEligibleCount++;
+            }
+
+            // Create response object
+            Map<String, Object> companyResult =
+                    new LinkedHashMap<>();
+
+            companyResult.put(
+                    "companyId",
+                    company.getId()
+            );
+
+            companyResult.put(
+                    "companyName",
+                    company.getCompanyName()
+            );
+
+            companyResult.put(
+                    "result",
+                    result
+            );
+
+            companyResult.put(
+                    "eligible",
+                    eligible
+            );
+
+            results.add(companyResult);
+        }
+
+        // Final response
+        Map<String, Object> response =
+                new LinkedHashMap<>();
+
+        response.put(
+                "studentId",
+                student.getId()
+        );
+
+        response.put(
+                "studentName",
+                student.getName()
+        );
+
+        response.put(
+                "totalCompanies",
+                companies.size()
+        );
+
+        response.put(
+                "eligibleCompanies",
+                eligibleCount
+        );
+
+        response.put(
+                "notEligibleCompanies",
+                notEligibleCount
+        );
+
+        response.put(
+                "results",
+                results
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    // =========================================================
+    // CHECK ALL STUDENTS FOR ONE COMPANY
+    // =========================================================
 
     @GetMapping("/all")
     public ResponseEntity<String> checkAllStudents(

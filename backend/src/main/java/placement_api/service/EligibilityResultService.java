@@ -2,6 +2,7 @@ package placement_api.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class EligibilityResultService {
     }
 
     // =========================
-    // SAVE RESULT
+    // SAVE OR UPDATE RESULT
     // =========================
 
     public EligibilityResult saveResult(
@@ -36,6 +37,27 @@ public class EligibilityResultService {
             reason = result;
         }
 
+        // Check whether this student-company combination already exists
+        Optional<EligibilityResult> existingResult =
+                repository.findByStudentIdAndCompanyId(
+                        studentId,
+                        companyId
+                );
+
+        if (existingResult.isPresent()) {
+
+            // Update existing record
+            EligibilityResult eligibilityResult =
+                    existingResult.get();
+
+            eligibilityResult.setResult(result);
+            eligibilityResult.setReason(reason);
+            eligibilityResult.setCheckedAt(LocalDateTime.now());
+
+            return repository.save(eligibilityResult);
+        }
+
+        // Create new record
         EligibilityResult eligibilityResult =
                 new EligibilityResult(
                         studentId,

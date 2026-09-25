@@ -1,6 +1,7 @@
 package placement_api.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,4 +15,9 @@ public interface EligibilityResultRepository
     List<EligibilityResult> findByCompanyId(int companyId);
 
     List<EligibilityResult> findByStudentIdOrderByCheckedAtDesc(int studentId);
+
+    Optional<EligibilityResult> findByStudentIdAndCompanyId(
+            int studentId,
+            int companyId
+    );
 }
