@@ -1,5 +1,6 @@
 package placement_api.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,7 @@ public class EligibilityController {
     }
 
     // =========================
-    // CHECK ELIGIBILITY
+    // CHECK ONE STUDENT
     // =========================
 
     @GetMapping
@@ -81,7 +82,78 @@ public class EligibilityController {
                 result
         );
 
-        // Return result to frontend
+        // Return result
         return ResponseEntity.ok(result);
+    }
+
+    // =========================
+    // CHECK ALL STUDENTS
+    // =========================
+
+    @GetMapping("/all")
+    public ResponseEntity<String> checkAllStudents(
+            @RequestParam int companyId) {
+
+        // Find company
+        Optional<Company> company =
+                companyRepository.findById(companyId);
+
+        if (company.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Company not found.");
+        }
+
+        // Get all students
+        List<Student> students =
+                studentRepository.findAll();
+
+        if (students.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("No students found.");
+        }
+
+        int eligibleCount = 0;
+        int notEligibleCount = 0;
+
+        // Check every student
+        for (Student student : students) {
+
+            String result =
+                    eligibilityService.checkEligibility(
+                            student,
+                            company.get()
+                    );
+
+            // Save result
+            eligibilityResultService.saveResult(
+                    student.getId(),
+                    companyId,
+                    result
+            );
+
+            // Count result
+            String lowerResult =
+                    result.toLowerCase();
+
+            if (
+                lowerResult.contains("eligible")
+                && !lowerResult.contains("not eligible")
+            ) {
+                eligibleCount++;
+            } else {
+                notEligibleCount++;
+            }
+        }
+
+        // Return summary
+        String response =
+                "Eligibility check completed. "
+                + "Total Students: " + students.size()
+                + ", Eligible: " + eligibleCount
+                + ", Not Eligible: " + notEligibleCount;
+
+        return ResponseEntity.ok(response);
     }
 }
