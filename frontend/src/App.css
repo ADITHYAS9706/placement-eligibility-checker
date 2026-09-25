@@ -6,11 +6,16 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f4f6f8;
+  color: #1f2937;
 }
 
 .app {
   min-height: 100vh;
 }
+
+/* =========================
+   HEADER
+========================= */
 
 .header {
   background: #1f2937;
@@ -22,12 +27,18 @@ body {
 .header h1 {
   margin: 0;
   font-size: 32px;
+  font-weight: 700;
 }
 
 .header p {
   margin-top: 10px;
   font-size: 18px;
+  color: #e5e7eb;
 }
+
+/* =========================
+   CARDS
+========================= */
 
 .card {
   background: white;
@@ -42,7 +53,67 @@ body {
 .card h2 {
   margin-top: 0;
   color: #1f2937;
+  text-align: center;
 }
+
+/* =========================
+   DASHBOARD STAT CARDS
+========================= */
+
+.stat-card,
+.stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 25px 20px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card h3,
+.stats-card h3 {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 20px;
+}
+
+/* Make dashboard numbers clearly visible */
+.stat-number,
+.number,
+.stat-card .number,
+.stats-card .number {
+  font-size: 40px;
+  font-weight: 800;
+  color: #111827;
+  margin: 10px 0;
+}
+
+/* Total Students */
+.stat-card:nth-child(1) .stat-number,
+.stats-card:nth-child(1) .stat-number {
+  color: #2563eb;
+}
+
+/* Total Companies */
+.stat-card:nth-child(2) .stat-number,
+.stats-card:nth-child(2) .stat-number {
+  color: #7c3aed;
+}
+
+/* Eligible Results */
+.stat-card:nth-child(3) .stat-number,
+.stats-card:nth-child(3) .stat-number {
+  color: #16a34a;
+}
+
+/* Not Eligible */
+.stat-card:nth-child(4) .stat-number,
+.stats-card:nth-child(4) .stat-number {
+  color: #dc2626;
+}
+
+/* =========================
+   FORMS
+========================= */
 
 form {
   display: grid;
@@ -50,12 +121,25 @@ form {
   gap: 15px;
 }
 
-input {
+input,
+select {
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 15px;
+  width: 100%;
 }
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* =========================
+   BUTTONS
+========================= */
 
 button {
   padding: 12px;
@@ -65,16 +149,30 @@ button {
   color: white;
   font-size: 16px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 button:hover {
   background: #1d4ed8;
 }
 
+button:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   MESSAGES
+========================= */
+
 .message {
   margin-top: 15px;
   font-weight: bold;
+  color: #374151;
 }
+
+/* =========================
+   TABLE
+========================= */
 
 .table-container {
   overflow-x: auto;
@@ -83,6 +181,7 @@ button:hover {
 table {
   width: 100%;
   border-collapse: collapse;
+  background: white;
 }
 
 th,
@@ -95,10 +194,75 @@ td {
 th {
   background: #1f2937;
   color: white;
+  font-weight: 700;
+}
+
+td {
+  color: #374151;
+}
+
+tr:hover {
+  background: #f9fafb;
+}
+
+/* =========================
+   ELIGIBILITY COLORS
+========================= */
+
+.eligible {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.not-eligible {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+@media (max-width: 900px) {
+  .card {
+    width: 94%;
+    padding: 25px;
+  }
+
+  .stat-number,
+  .number {
+    font-size: 34px;
+  }
 }
 
 @media (max-width: 700px) {
   form {
     grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 26px;
+  }
+
+  .header p {
+    font-size: 16px;
+  }
+
+  .card {
+    width: 95%;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .stat-number,
+  .number {
+    font-size: 30px;
+  }
+
+  th,
+  td {
+    padding: 8px;
+    font-size: 14px;
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
+
   // =========================
   // STUDENTS
   // =========================
@@ -13,7 +14,7 @@ function App() {
     cgpa: "",
     backlogs: "",
     branch: "",
-    graduationYear: ""
+    graduationYear: "",
   });
 
   const [editingStudentId, setEditingStudentId] = useState(null);
@@ -29,7 +30,7 @@ function App() {
     minCgpa: "",
     maxBacklogs: "",
     eligibleBranch: "",
-    graduationYear: ""
+    graduationYear: "",
   });
 
   const [editingCompanyId, setEditingCompanyId] = useState(null);
@@ -72,9 +73,16 @@ function App() {
 
       setStudents(data);
 
+      if (data.length > 0 && !studentId) {
+        setStudentId(String(data[0].id));
+      }
+
     } catch (error) {
       console.error(error);
-      setMessage("Could not connect to student backend.");
+
+      setMessage(
+        "Could not connect to student backend."
+      );
     }
   };
 
@@ -96,9 +104,16 @@ function App() {
 
       setCompanies(data);
 
+      if (data.length > 0 && !companyId) {
+        setCompanyId(String(data[0].id));
+      }
+
     } catch (error) {
       console.error(error);
-      setMessage("Could not connect to company backend.");
+
+      setMessage(
+        "Could not connect to company backend."
+      );
     }
   };
 
@@ -124,6 +139,7 @@ function App() {
 
     } catch (error) {
       console.error(error);
+
       setMessage(
         "Could not connect to eligibility results backend."
       );
@@ -131,7 +147,7 @@ function App() {
   };
 
   // =========================
-  // LOAD DATA WHEN PAGE OPENS
+  // INITIAL LOAD
   // =========================
 
   useEffect(() => {
@@ -141,13 +157,146 @@ function App() {
   }, []);
 
   // =========================
+  // FIND STUDENT
+  // =========================
+
+  const getStudentName = (id) => {
+
+    const student = students.find(
+      (student) =>
+        Number(student.id) === Number(id)
+    );
+
+    return student
+      ? student.name
+      : "Unknown Student";
+  };
+
+  // =========================
+  // FIND COMPANY
+  // =========================
+
+  const getCompanyName = (id) => {
+
+    const company = companies.find(
+      (company) =>
+        Number(company.id) === Number(id)
+    );
+
+    return company
+      ? company.companyName
+      : "Unknown Company";
+  };
+
+  // =========================
+  // FORMAT DATE
+  // =========================
+
+  const formatDateTime = (dateValue) => {
+
+    if (!dateValue) {
+      return "N/A";
+    }
+
+    const date = new Date(dateValue);
+
+    if (isNaN(date.getTime())) {
+      return dateValue;
+    }
+
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  // =========================
+  // DASHBOARD COUNTS
+  // =========================
+
+  const totalStudents = students.length;
+
+  const totalCompanies = companies.length;
+
+  // Students who have at least one eligible result
+  const eligibleStudentIds = new Set();
+
+  // Students who have been checked at least once
+  const checkedStudentIds = new Set();
+
+  eligibilityResults.forEach((item) => {
+
+    const result = String(
+      item.result || ""
+    ).toLowerCase();
+
+    const id = Number(item.studentId);
+
+    if (!id) {
+      return;
+    }
+
+    checkedStudentIds.add(id);
+
+    if (
+      result.includes("eligible") &&
+      !result.includes("not eligible")
+    ) {
+      eligibleStudentIds.add(id);
+    }
+  });
+
+  // =========================
+  // ELIGIBLE STUDENTS
+  // =========================
+
+  const totalEligible =
+    eligibleStudentIds.size;
+
+  // =========================
+  // NOT ELIGIBLE STUDENTS
+  // =========================
+
+  const notEligibleStudentIds =
+    new Set();
+
+  checkedStudentIds.forEach((id) => {
+
+    if (!eligibleStudentIds.has(id)) {
+      notEligibleStudentIds.add(id);
+    }
+
+  });
+
+  const totalNotEligible =
+    notEligibleStudentIds.size;
+
+  // =========================
+  // PENDING / NOT CHECKED
+  // =========================
+
+  const totalPending =
+    Math.max(
+      0,
+      totalStudents -
+      totalEligible -
+      totalNotEligible
+    );
+
+  // =========================
   // STUDENT INPUT
   // =========================
 
   const handleStudentChange = (event) => {
+
     setStudentForm({
       ...studentForm,
-      [event.target.name]: event.target.value
+      [event.target.name]:
+        event.target.value,
     });
   };
 
@@ -156,6 +305,7 @@ function App() {
   // =========================
 
   const handleStudentSubmit = async (event) => {
+
     event.preventDefault();
 
     setMessage("");
@@ -165,12 +315,13 @@ function App() {
       cgpa: Number(studentForm.cgpa),
       backlogs: Number(studentForm.backlogs),
       branch: studentForm.branch,
-      graduationYear: Number(studentForm.graduationYear)
+      graduationYear: Number(
+        studentForm.graduationYear
+      ),
     };
 
     try {
 
-      // UPDATE
       if (editingStudentId !== null) {
 
         const response = await fetch(
@@ -178,14 +329,17 @@ function App() {
           {
             method: "PUT",
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type":
+                "application/json",
             },
-            body: JSON.stringify(studentData)
+            body: JSON.stringify(studentData),
           }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to update student");
+          throw new Error(
+            "Failed to update student"
+          );
         }
 
         const updatedStudent =
@@ -205,24 +359,24 @@ function App() {
 
         setEditingStudentId(null);
 
-      }
-
-      // ADD
-      else {
+      } else {
 
         const response = await fetch(
           "http://localhost:8080/api/students",
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type":
+                "application/json",
             },
-            body: JSON.stringify(studentData)
+            body: JSON.stringify(studentData),
           }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to add student");
+          throw new Error(
+            "Failed to add student"
+          );
         }
 
         const newStudent =
@@ -230,8 +384,12 @@ function App() {
 
         setStudents([
           ...students,
-          newStudent
+          newStudent,
         ]);
+
+        setStudentId(
+          String(newStudent.id)
+        );
 
         setMessage(
           "Student added successfully!"
@@ -243,7 +401,7 @@ function App() {
         cgpa: "",
         backlogs: "",
         branch: "",
-        graduationYear: ""
+        graduationYear: "",
       });
 
     } catch (error) {
@@ -272,7 +430,7 @@ function App() {
       backlogs: student.backlogs,
       branch: student.branch,
       graduationYear:
-        student.graduationYear
+        student.graduationYear,
     });
 
     setMessage("");
@@ -291,7 +449,7 @@ function App() {
       cgpa: "",
       backlogs: "",
       branch: "",
-      graduationYear: ""
+      graduationYear: "",
     });
 
     setMessage("");
@@ -316,7 +474,7 @@ function App() {
       const response = await fetch(
         `http://localhost:8080/api/students/${id}`,
         {
-          method: "DELETE"
+          method: "DELETE",
         }
       );
 
@@ -326,11 +484,32 @@ function App() {
         );
       }
 
-      setStudents(
+      const updatedStudents =
         students.filter(
-          (student) => student.id !== id
-        )
-      );
+          (student) =>
+            student.id !== id
+        );
+
+      setStudents(updatedStudents);
+
+      if (
+        Number(studentId) === Number(id)
+      ) {
+
+        if (updatedStudents.length > 0) {
+
+          setStudentId(
+            String(
+              updatedStudents[0].id
+            )
+          );
+
+        } else {
+
+          setStudentId("");
+
+        }
+      }
 
       setMessage(
         "Student deleted successfully!"
@@ -354,7 +533,8 @@ function App() {
 
     setCompanyForm({
       ...companyForm,
-      [event.target.name]: event.target.value
+      [event.target.name]:
+        event.target.value,
     });
   };
 
@@ -369,6 +549,7 @@ function App() {
     setMessage("");
 
     const companyData = {
+
       companyName:
         companyForm.companyName,
 
@@ -382,12 +563,11 @@ function App() {
         companyForm.eligibleBranch,
 
       graduationYear:
-        Number(companyForm.graduationYear)
+        Number(companyForm.graduationYear),
     };
 
     try {
 
-      // UPDATE
       if (editingCompanyId !== null) {
 
         const response = await fetch(
@@ -395,9 +575,10 @@ function App() {
           {
             method: "PUT",
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type":
+                "application/json",
             },
-            body: JSON.stringify(companyData)
+            body: JSON.stringify(companyData),
           }
         );
 
@@ -424,19 +605,17 @@ function App() {
 
         setEditingCompanyId(null);
 
-      }
-
-      // ADD
-      else {
+      } else {
 
         const response = await fetch(
           "http://localhost:8080/api/companies",
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type":
+                "application/json",
             },
-            body: JSON.stringify(companyData)
+            body: JSON.stringify(companyData),
           }
         );
 
@@ -451,8 +630,12 @@ function App() {
 
         setCompanies([
           ...companies,
-          newCompany
+          newCompany,
         ]);
+
+        setCompanyId(
+          String(newCompany.id)
+        );
 
         setMessage(
           "Company added successfully!"
@@ -464,7 +647,7 @@ function App() {
         minCgpa: "",
         maxBacklogs: "",
         eligibleBranch: "",
-        graduationYear: ""
+        graduationYear: "",
       });
 
     } catch (error) {
@@ -490,11 +673,12 @@ function App() {
     setCompanyForm({
       companyName: company.companyName,
       minCgpa: company.minCgpa,
-      maxBacklogs: company.maxBacklogs,
+      maxBacklogs:
+        company.maxBacklogs,
       eligibleBranch:
         company.eligibleBranch,
       graduationYear:
-        company.graduationYear
+        company.graduationYear,
     });
 
     setMessage("");
@@ -513,7 +697,7 @@ function App() {
       minCgpa: "",
       maxBacklogs: "",
       eligibleBranch: "",
-      graduationYear: ""
+      graduationYear: "",
     });
 
     setMessage("");
@@ -538,7 +722,7 @@ function App() {
       const response = await fetch(
         `http://localhost:8080/api/companies/${id}`,
         {
-          method: "DELETE"
+          method: "DELETE",
         }
       );
 
@@ -548,11 +732,32 @@ function App() {
         );
       }
 
-      setCompanies(
+      const updatedCompanies =
         companies.filter(
-          (company) => company.id !== id
-        )
-      );
+          (company) =>
+            company.id !== id
+        );
+
+      setCompanies(updatedCompanies);
+
+      if (
+        Number(companyId) === Number(id)
+      ) {
+
+        if (updatedCompanies.length > 0) {
+
+          setCompanyId(
+            String(
+              updatedCompanies[0].id
+            )
+          );
+
+        } else {
+
+          setCompanyId("");
+
+        }
+      }
 
       setMessage(
         "Company deleted successfully!"
@@ -577,13 +782,14 @@ function App() {
     if (!studentId || !companyId) {
 
       setEligibilityResult(
-        "Please enter Student ID and Company ID."
+        "Please select a student and company."
       );
 
       return;
     }
 
     setEligibilityResult("");
+    setMessage("");
 
     try {
 
@@ -603,7 +809,6 @@ function App() {
 
       setEligibilityResult(result);
 
-      // Reload saved results
       await loadEligibilityResults();
 
     } catch (error) {
@@ -616,12 +821,104 @@ function App() {
     }
   };
 
+  // =========================
+  // RESULT STYLE
+  // =========================
+
+  const getResultStyle = (result) => {
+
+    const text = String(
+      result || ""
+    ).toLowerCase();
+
+    if (
+      text.includes("eligible") &&
+      !text.includes("not eligible")
+    ) {
+
+      return {
+        color: "#15803d",
+        fontWeight: "bold",
+      };
+    }
+
+    return {
+      color: "#dc2626",
+      fontWeight: "bold",
+    };
+  };
+
+  // =========================
+  // DASHBOARD CARD
+  // =========================
+
+  const DashboardCard = ({
+    title,
+    value,
+    description,
+    valueColor,
+  }) => {
+
+    return (
+
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          borderRadius: "12px",
+          padding: "22px",
+          boxShadow:
+            "0 2px 8px rgba(0,0,0,0.08)",
+          flex: "1 1 200px",
+          minWidth: "200px",
+        }}
+      >
+
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            color: "#374151",
+            fontSize: "15px",
+            fontWeight: "600",
+          }}
+        >
+          {title}
+        </p>
+
+        <h2
+          style={{
+            margin: "0 0 6px 0",
+            fontSize: "36px",
+            fontWeight: "800",
+            color: valueColor,
+          }}
+        >
+          {value}
+        </h2>
+
+        <p
+          style={{
+            margin: 0,
+            color: "#6b7280",
+            fontSize: "13px",
+          }}
+        >
+          {description}
+        </p>
+
+      </div>
+    );
+  };
+
+  // =========================
+  // PAGE
+  // =========================
+
   return (
+
     <div className="app">
 
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* HEADER */}
 
       <header className="header">
 
@@ -635,9 +932,7 @@ function App() {
 
       </header>
 
-      {/* =========================
-          MESSAGE
-      ========================= */}
+      {/* MESSAGE */}
 
       {message && (
         <p className="message">
@@ -645,9 +940,70 @@ function App() {
         </p>
       )}
 
-      {/* =========================
-          STUDENT SECTION
-      ========================= */}
+      {/* DASHBOARD */}
+
+      <section
+        style={{
+          marginBottom: "30px",
+        }}
+      >
+
+        <h2
+          style={{
+            marginBottom: "15px",
+          }}
+        >
+          Dashboard
+        </h2>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "18px",
+            flexWrap: "wrap",
+          }}
+        >
+
+          <DashboardCard
+            title="Total Students"
+            value={totalStudents}
+            description="Students registered"
+            valueColor="#2563eb"
+          />
+
+          <DashboardCard
+            title="Total Companies"
+            value={totalCompanies}
+            description="Companies registered"
+            valueColor="#7c3aed"
+          />
+
+          <DashboardCard
+            title="Eligible Students"
+            value={totalEligible}
+            description="Unique students eligible"
+            valueColor="#16a34a"
+          />
+
+          <DashboardCard
+            title="Not Eligible Students"
+            value={totalNotEligible}
+            description="Unique students not eligible"
+            valueColor="#dc2626"
+          />
+
+          <DashboardCard
+            title="Pending / Not Checked"
+            value={totalPending}
+            description="Students not checked yet"
+            valueColor="#ea580c"
+          />
+
+        </div>
+
+      </section>
+
+      {/* STUDENT SECTION */}
 
       <section className="card">
 
@@ -705,9 +1061,7 @@ function App() {
             type="number"
             name="graduationYear"
             placeholder="Graduation Year"
-            value={
-              studentForm.graduationYear
-            }
+            value={studentForm.graduationYear}
             onChange={handleStudentChange}
             required
           />
@@ -735,9 +1089,7 @@ function App() {
 
       </section>
 
-      {/* =========================
-          STUDENT LIST
-      ========================= */}
+      {/* STUDENT LIST */}
 
       <section className="card">
 
@@ -807,7 +1159,9 @@ function App() {
 
                       <button
                         onClick={() =>
-                          handleEditStudent(student)
+                          handleEditStudent(
+                            student
+                          )
                         }
                       >
                         Edit
@@ -839,9 +1193,7 @@ function App() {
 
       </section>
 
-      {/* =========================
-          COMPANY SECTION
-      ========================= */}
+      {/* COMPANY SECTION */}
 
       <section className="card">
 
@@ -859,9 +1211,7 @@ function App() {
             type="text"
             name="companyName"
             placeholder="Company Name"
-            value={
-              companyForm.companyName
-            }
+            value={companyForm.companyName}
             onChange={handleCompanyChange}
             required
           />
@@ -883,9 +1233,7 @@ function App() {
             name="maxBacklogs"
             placeholder="Maximum Backlogs"
             min="0"
-            value={
-              companyForm.maxBacklogs
-            }
+            value={companyForm.maxBacklogs}
             onChange={handleCompanyChange}
             required
           />
@@ -894,9 +1242,7 @@ function App() {
             type="text"
             name="eligibleBranch"
             placeholder="Eligible Branch"
-            value={
-              companyForm.eligibleBranch
-            }
+            value={companyForm.eligibleBranch}
             onChange={handleCompanyChange}
             required
           />
@@ -905,9 +1251,7 @@ function App() {
             type="number"
             name="graduationYear"
             placeholder="Graduation Year"
-            value={
-              companyForm.graduationYear
-            }
+            value={companyForm.graduationYear}
             onChange={handleCompanyChange}
             required
           />
@@ -935,9 +1279,7 @@ function App() {
 
       </section>
 
-      {/* =========================
-          COMPANY LIST
-      ========================= */}
+      {/* COMPANY LIST */}
 
       <section className="card">
 
@@ -1007,7 +1349,9 @@ function App() {
 
                       <button
                         onClick={() =>
-                          handleEditCompany(company)
+                          handleEditCompany(
+                            company
+                          )
                         }
                       >
                         Edit
@@ -1039,36 +1383,106 @@ function App() {
 
       </section>
 
-      {/* =========================
-          ELIGIBILITY CHECK
-      ========================= */}
+      {/* ELIGIBILITY CHECK */}
 
       <section className="card">
 
         <h2>
-          Check Eligibility
+          Check Placement Eligibility
         </h2>
 
-        <input
-          type="number"
-          placeholder="Student ID"
+        <p>
+          Select a student and company to
+          check whether the student is
+          eligible.
+        </p>
+
+        <select
           value={studentId}
           onChange={(event) =>
-            setStudentId(event.target.value)
+            setStudentId(
+              event.target.value
+            )
           }
-        />
+          disabled={
+            students.length === 0
+          }
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginBottom: "15px",
+            fontSize: "16px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            boxSizing: "border-box",
+          }}
+        >
 
-        <input
-          type="number"
-          placeholder="Company ID"
+          <option value="">
+            Select Student
+          </option>
+
+          {students.map((student) => (
+
+            <option
+              key={student.id}
+              value={student.id}
+            >
+              {student.name} — ID{" "}
+              {student.id}
+            </option>
+
+          ))}
+
+        </select>
+
+        <select
           value={companyId}
           onChange={(event) =>
-            setCompanyId(event.target.value)
+            setCompanyId(
+              event.target.value
+            )
           }
-        />
+          disabled={
+            companies.length === 0
+          }
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginBottom: "15px",
+            fontSize: "16px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            boxSizing: "border-box",
+          }}
+        >
+
+          <option value="">
+            Select Company
+          </option>
+
+          {companies.map((company) => (
+
+            <option
+              key={company.id}
+              value={company.id}
+            >
+              {company.companyName} — ID{" "}
+              {company.id}
+            </option>
+
+          ))}
+
+        </select>
 
         <button
           onClick={handleCheckEligibility}
+          disabled={
+            !studentId ||
+            !companyId ||
+            students.length === 0 ||
+            companies.length === 0
+          }
         >
           Check Eligibility
         </button>
@@ -1081,7 +1495,11 @@ function App() {
               Eligibility Result
             </h3>
 
-            <p>
+            <p
+              style={getResultStyle(
+                eligibilityResult
+              )}
+            >
               {eligibilityResult}
             </p>
 
@@ -1091,9 +1509,7 @@ function App() {
 
       </section>
 
-      {/* =========================
-          ELIGIBILITY RESULTS
-      ========================= */}
+      {/* ELIGIBILITY RESULTS */}
 
       <section className="card">
 
@@ -1118,8 +1534,8 @@ function App() {
                 <tr>
 
                   <th>ID</th>
-                  <th>Student ID</th>
-                  <th>Company ID</th>
+                  <th>Student</th>
+                  <th>Company</th>
                   <th>Result</th>
                   <th>Reason</th>
                   <th>Checked At</th>
@@ -1140,27 +1556,67 @@ function App() {
                       </td>
 
                       <td>
-                        {item.studentId}
+
+                        <strong>
+                          {getStudentName(
+                            item.studentId
+                          )}
+                        </strong>
+
+                        <br />
+
+                        <small>
+                          ID:{" "}
+                          {item.studentId}
+                        </small>
+
                       </td>
 
                       <td>
-                        {item.companyId}
+
+                        <strong>
+                          {getCompanyName(
+                            item.companyId
+                          )}
+                        </strong>
+
+                        <br />
+
+                        <small>
+                          ID:{" "}
+                          {item.companyId}
+                        </small>
+
                       </td>
 
                       <td>
-                        {item.result}
+
+                        <span
+                          style={{
+                            ...getResultStyle(
+                              item.result
+                            ),
+                            padding:
+                              "6px 10px",
+                            borderRadius:
+                              "6px",
+                          }}
+                        >
+                          {item.result}
+                        </span>
+
                       </td>
 
                       <td>
-                        {item.reason}
+                        {item.reason
+                          ? item.reason
+                          : "No reason available"}
                       </td>
 
                       <td>
-                        {item.checkedAt
-                          ? new Date(
-                              item.checkedAt
-                            ).toLocaleString()
-                          : "N/A"}
+                        {formatDateTime(
+                          item.checkedAt
+                        )}
                       </td>
 
                     </tr>
