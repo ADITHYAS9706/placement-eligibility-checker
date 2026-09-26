@@ -304,16 +304,16 @@ function App() {
     return;
   }
 
-  // Load students and companies for dashboard statistics.
-  // The navigation still controls which management sections are visible
-  // based on the logged-in user's role.
-  loadStudents();
-  loadCompanies();
+  // Only ADMIN can load students and companies
+  if (isAdmin) {
+    loadStudents();
+    loadCompanies();
+  }
 
   // Load results and reports
   loadEligibilityResults();
   loadPlacementReports();
-}, [isLoggedIn]);
+}, [isLoggedIn, isAdmin]);
 
   // =========================
   // FIND STUDENT
