@@ -9,9 +9,17 @@ public class DatabaseConnection {
 
     private static final String USER = "root";
 
-    private static final String PASSWORD = "Adithya@2006";
+    private static final String PASSWORD =
+            System.getenv("PLACEMENT_DB_PASSWORD");
 
     public static Connection getConnection() throws SQLException {
+
+        if (PASSWORD == null || PASSWORD.isBlank()) {
+            throw new SQLException(
+                "PLACEMENT_DB_PASSWORD environment variable is not set."
+            );
+        }
+
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 }
