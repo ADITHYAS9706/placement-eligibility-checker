@@ -3,8 +3,6 @@ import "./App.css";
 import Login from "./Login";
 import { apiFetch } from "./api";
 
-const fetch = apiFetch;
-
 const API = "http://localhost:8080/api";
 
 const navItems = [
@@ -173,7 +171,7 @@ function App() {
 
   const loadStudents = async () => {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API}/students`
       );
 
@@ -216,7 +214,7 @@ function App() {
 
   const loadCompanies = async () => {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API}/companies`
       );
 
@@ -246,12 +244,13 @@ function App() {
 
   // =========================
   // LOAD RESULTS
+
   // =========================
 
   const loadEligibilityResults =
     async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${API}/eligibility-results`
         );
 
@@ -277,7 +276,7 @@ function App() {
   const loadPlacementReports =
     async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${API}/reports/students`
         );
 
@@ -300,16 +299,21 @@ function App() {
   // INITIAL LOAD
   // =========================
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      return;
-    }
+ useEffect(() => {
+  if (!isLoggedIn) {
+    return;
+  }
 
-    loadStudents();
-    loadCompanies();
-    loadEligibilityResults();
-    loadPlacementReports();
-  }, [isLoggedIn]);
+  // Load students and companies for dashboard statistics.
+  // The navigation still controls which management sections are visible
+  // based on the logged-in user's role.
+  loadStudents();
+  loadCompanies();
+
+  // Load results and reports
+  loadEligibilityResults();
+  loadPlacementReports();
+}, [isLoggedIn]);
 
   // =========================
   // FIND STUDENT
@@ -497,7 +501,7 @@ function App() {
           null
         ) {
           const response =
-            await fetch(
+            await apiFetch(
               `${API}/students/${editingStudentId}`,
               {
                 method: "PUT",
@@ -539,7 +543,7 @@ function App() {
           setEditingStudentId(null);
         } else {
           const response =
-            await fetch(
+            await apiFetch(
               `${API}/students`,
               {
                 method: "POST",
@@ -663,7 +667,7 @@ function App() {
 
       try {
         const response =
-          await fetch(
+          await apiFetch(
             `${API}/students/${id}`,
             {
               method: "DELETE",
@@ -766,7 +770,7 @@ function App() {
           null
         ) {
           const response =
-            await fetch(
+            await apiFetch(
               `${API}/companies/${editingCompanyId}`,
               {
                 method: "PUT",
@@ -810,7 +814,7 @@ function App() {
           );
         } else {
           const response =
-            await fetch(
+            await apiFetch(
               `${API}/companies`,
               {
                 method: "POST",
@@ -941,7 +945,7 @@ function App() {
 
       try {
         const response =
-          await fetch(
+          await apiFetch(
             `${API}/companies/${id}`,
             {
               method: "DELETE",
@@ -1013,7 +1017,7 @@ function App() {
 
       try {
         const response =
-          await fetch(
+          await apiFetch(
             `${API}/eligibility?studentId=${studentId}&companyId=${companyId}`
           );
 
