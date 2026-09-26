@@ -87,6 +87,8 @@ function App() {
       graduationYear: "",
     });
 
+  const [studentErrors, setStudentErrors] = useState({});
+
   const [editingStudentId, setEditingStudentId] =
     useState(null);
 
@@ -475,11 +477,63 @@ function App() {
   // STUDENT SUBMIT
   // =========================
 
+  const validateStudentForm = () => {
+    const errors = {};
+
+    const name = studentForm.name.trim();
+    const cgpa = Number(studentForm.cgpa);
+    const backlogs = Number(studentForm.backlogs);
+    const branch = studentForm.branch.trim();
+    const graduationYear = Number(studentForm.graduationYear);
+    const currentYear = new Date().getFullYear();
+
+    if (!name) {
+      errors.name = "Student name is required.";
+    } else if (name.length < 2) {
+      errors.name = "Student name must contain at least 2 characters.";
+    }
+
+    if (studentForm.cgpa === "" || Number.isNaN(cgpa)) {
+      errors.cgpa = "CGPA is required.";
+    } else if (cgpa < 0 || cgpa > 10) {
+      errors.cgpa = "CGPA must be between 0 and 10.";
+    }
+
+    if (studentForm.backlogs === "" || Number.isNaN(backlogs)) {
+      errors.backlogs = "Number of backlogs is required.";
+    } else if (!Number.isInteger(backlogs) || backlogs < 0) {
+      errors.backlogs = "Backlogs must be a non-negative whole number.";
+    }
+
+    if (!branch) {
+      errors.branch = "Branch is required.";
+    }
+
+    if (studentForm.graduationYear === "" || Number.isNaN(graduationYear)) {
+      errors.graduationYear = "Graduation year is required.";
+    } else if (
+      !Number.isInteger(graduationYear) ||
+      graduationYear < currentYear ||
+      graduationYear > currentYear + 10
+    ) {
+      errors.graduationYear =
+        `Graduation year must be between ${currentYear} and ${currentYear + 10}.`;
+    }
+
+    setStudentErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleStudentSubmit =
     async (event) => {
       event.preventDefault();
 
       setMessage("");
+
+      if (!validateStudentForm()) {
+        setMessage("Please correct the highlighted student form errors.");
+        return;
+      }
 
       const studentData = {
         name: studentForm.name,
@@ -592,6 +646,8 @@ function App() {
           graduationYear: "",
         });
 
+        setStudentErrors({});
+
         await loadPlacementReports();
       } catch (error) {
         console.error(error);
@@ -629,6 +685,8 @@ function App() {
       "students"
     );
 
+    setStudentErrors({});
+
     setMessage("");
   };
 
@@ -646,6 +704,8 @@ function App() {
       branch: "",
       graduationYear: "",
     });
+
+    setStudentErrors({});
 
     setMessage("");
   };
@@ -1570,6 +1630,12 @@ function App() {
                     required
                   />
 
+                    {studentErrors.name && (
+                      <small className="form-error">
+                        {studentErrors.name}
+                      </small>
+                    )}
+
                   <input
                     type="number"
                     name="cgpa"
@@ -1586,6 +1652,12 @@ function App() {
                     required
                   />
 
+                    {studentErrors.cgpa && (
+                      <small className="form-error">
+                        {studentErrors.cgpa}
+                      </small>
+                    )}
+
                   <input
                     type="number"
                     name="backlogs"
@@ -1600,6 +1672,12 @@ function App() {
                     required
                   />
 
+                    {studentErrors.backlogs && (
+                      <small className="form-error">
+                        {studentErrors.backlogs}
+                      </small>
+                    )}
+
                   <input
                     type="text"
                     name="branch"
@@ -1613,6 +1691,12 @@ function App() {
                     required
                   />
 
+                    {studentErrors.branch && (
+                      <small className="form-error">
+                        {studentErrors.branch}
+                      </small>
+                    )}
+
                   <input
                     type="number"
                     name="graduationYear"
@@ -1625,6 +1709,12 @@ function App() {
                     }
                     required
                   />
+
+                    {studentErrors.graduationYear && (
+                      <small className="form-error">
+                        {studentErrors.graduationYear}
+                      </small>
+                    )}
 
                   <div className="form-actions">
 
