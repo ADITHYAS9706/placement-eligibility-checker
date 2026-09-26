@@ -13,7 +13,10 @@ import placement_api.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+    "http://localhost:4173",
+    "http://localhost:5173"
+})
 public class AuthController {
 
     private final UserService userService;
