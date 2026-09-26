@@ -27,12 +27,15 @@ function Login({ onLogin }) {
         }
       );
 
-      const responseText = await response.text();
+      const responseText =
+        await response.text();
 
       if (!response.ok) {
         setMessage(
-          responseText || "Login failed."
+          responseText ||
+            "Login failed."
         );
+
         setLoading(false);
         return;
       }
@@ -40,7 +43,8 @@ function Login({ onLogin }) {
       let result = {};
 
       try {
-        result = JSON.parse(responseText);
+        result =
+          JSON.parse(responseText);
       } catch (error) {
         console.error(
           "Could not parse login response:",
@@ -48,21 +52,45 @@ function Login({ onLogin }) {
         );
       }
 
-      localStorage.setItem("loggedIn", "true");
+      if (!result.token) {
+        setMessage(
+          "Login succeeded, but no authentication token was returned."
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem(
+        "loggedIn",
+        "true"
+      );
 
       localStorage.setItem(
         "username",
-        result.username || username
+        result.username ||
+          username
       );
 
       localStorage.setItem(
         "userRole",
-        result.role || "USER"
+        result.role ||
+          "USER"
+      );
+
+      localStorage.setItem(
+        "authToken",
+        result.token
       );
 
       onLogin({
-        username: result.username || username,
-        role: result.role || "USER",
+        username:
+          result.username ||
+          username,
+
+        role:
+          result.role ||
+          "USER",
       });
 
     } catch (error) {
@@ -95,7 +123,9 @@ function Login({ onLogin }) {
 
         <h2>Login</h2>
 
-        <form onSubmit={handleLogin}>
+        <form
+          onSubmit={handleLogin}
+        >
 
           <label>
             Username
@@ -106,7 +136,9 @@ function Login({ onLogin }) {
             placeholder="Enter username"
             value={username}
             onChange={(event) =>
-              setUsername(event.target.value)
+              setUsername(
+                event.target.value
+              )
             }
             required
           />
@@ -120,7 +152,9 @@ function Login({ onLogin }) {
             placeholder="Enter password"
             value={password}
             onChange={(event) =>
-              setPassword(event.target.value)
+              setPassword(
+                event.target.value
+              )
             }
             required
           />
@@ -129,7 +163,9 @@ function Login({ onLogin }) {
             type="submit"
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading
+              ? "Logging in..."
+              : "Login"}
           </button>
 
         </form>

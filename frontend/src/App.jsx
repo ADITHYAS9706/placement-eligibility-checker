@@ -1,16 +1,43 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import Login from "./Login";
+import { apiFetch } from "./api";
+
+const fetch = apiFetch;
 
 const API = "http://localhost:8080/api";
 
 const navItems = [
-  { id: "dashboard", icon: "▦", label: "Dashboard" },
-  { id: "students", icon: "👨‍🎓", label: "Students" },
-  { id: "companies", icon: "🏢", label: "Companies" },
-  { id: "eligibility", icon: "✓", label: "Eligibility" },
-  { id: "results", icon: "📋", label: "Results" },
-  { id: "reports", icon: "📊", label: "Reports" },
+  {
+    id: "dashboard",
+    icon: "▦",
+    label: "Dashboard",
+  },
+  {
+    id: "students",
+    icon: "👨‍🎓",
+    label: "Students",
+  },
+  {
+    id: "companies",
+    icon: "🏢",
+    label: "Companies",
+  },
+  {
+    id: "eligibility",
+    icon: "✓",
+    label: "Eligibility",
+  },
+  {
+    id: "results",
+    icon: "📋",
+    label: "Results",
+  },
+  {
+    id: "reports",
+    icon: "📊",
+    label: "Reports",
+  },
 ];
 
 function App() {
@@ -18,80 +45,127 @@ function App() {
   // AUTHENTICATION
   // =========================
 
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    () => localStorage.getItem("loggedIn") === "true"
-  );
+  const [isLoggedIn, setIsLoggedIn] =
+    useState(
+      () =>
+        localStorage.getItem(
+          "loggedIn"
+        ) === "true"
+    );
 
-  const [currentUser, setCurrentUser] = useState(() => ({
-    username: localStorage.getItem("username") || "",
-    role: localStorage.getItem("userRole") || "USER",
-  }));
+  const [currentUser, setCurrentUser] =
+    useState(() => ({
+      username:
+        localStorage.getItem(
+          "username"
+        ) || "",
+
+      role:
+        localStorage.getItem(
+          "userRole"
+        ) || "USER",
+    }));
 
   // =========================
   // NAVIGATION
   // =========================
 
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] =
+    useState("dashboard");
 
   // =========================
   // STUDENTS
   // =========================
 
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] =
+    useState([]);
 
-  const [studentForm, setStudentForm] = useState({
-    name: "",
-    cgpa: "",
-    backlogs: "",
-    branch: "",
-    graduationYear: "",
-  });
+  const [studentForm, setStudentForm] =
+    useState({
+      name: "",
+      cgpa: "",
+      backlogs: "",
+      branch: "",
+      graduationYear: "",
+    });
 
-  const [editingStudentId, setEditingStudentId] = useState(null);
+  const [editingStudentId, setEditingStudentId] =
+    useState(null);
 
   // =========================
   // COMPANIES
   // =========================
 
-  const [companies, setCompanies] = useState([]);
+  const [companies, setCompanies] =
+    useState([]);
 
-  const [companyForm, setCompanyForm] = useState({
-    companyName: "",
-    minCgpa: "",
-    maxBacklogs: "",
-    eligibleBranch: "",
-    graduationYear: "",
-  });
+  const [companyForm, setCompanyForm] =
+    useState({
+      companyName: "",
+      minCgpa: "",
+      maxBacklogs: "",
+      eligibleBranch: "",
+      graduationYear: "",
+    });
 
-  const [editingCompanyId, setEditingCompanyId] = useState(null);
+  const [editingCompanyId, setEditingCompanyId] =
+    useState(null);
 
   // =========================
   // ELIGIBILITY
   // =========================
 
-  const [studentId, setStudentId] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [eligibilityResult, setEligibilityResult] = useState("");
+  const [studentId, setStudentId] =
+    useState("");
+
+  const [companyId, setCompanyId] =
+    useState("");
+
+  const [eligibilityResult, setEligibilityResult] =
+    useState("");
 
   // =========================
-  // ELIGIBILITY RESULTS
+  // RESULTS
   // =========================
 
-  const [eligibilityResults, setEligibilityResults] = useState([]);
+  const [eligibilityResults, setEligibilityResults] =
+    useState([]);
 
   // =========================
-  // PLACEMENT REPORTS
+  // REPORTS
   // =========================
 
-  const [placementReports, setPlacementReports] = useState([]);
-  const [reportSearch, setReportSearch] = useState("");
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [placementReports, setPlacementReports] =
+    useState([]);
+
+  const [reportSearch, setReportSearch] =
+    useState("");
+
+  const [selectedReport, setSelectedReport] =
+    useState(null);
 
   // =========================
   // MESSAGE
   // =========================
 
-  const [message, setMessage] = useState("");
+  const [message, setMessage] =
+    useState("");
+
+  // =========================
+  // ROLE
+  // =========================
+
+  const isAdmin =
+    currentUser.role === "ADMIN";
+
+  const visibleNavItems = isAdmin
+    ? navItems
+    : navItems.filter(
+        (item) =>
+          item.id === "dashboard" ||
+          item.id === "results" ||
+          item.id === "reports"
+      );
 
   // =========================
   // LOAD STUDENTS
@@ -99,22 +173,40 @@ function App() {
 
   const loadStudents = async () => {
     try {
-      const response = await fetch(`${API}/students`);
+      const response = await fetch(
+        `${API}/students`
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to load students");
+        throw new Error(
+          "Failed to load students"
+        );
       }
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       setStudents(data);
 
-      if (data.length > 0 && !studentId) {
-        setStudentId(String(data[0].id));
+      if (
+        data.length > 0 &&
+        !studentId
+      ) {
+        setStudentId(
+          String(data[0].id)
+        );
       }
     } catch (error) {
       console.error(error);
-      setMessage("Could not connect to student backend.");
+
+      if (
+        error.message !==
+        "Unauthorized"
+      ) {
+        setMessage(
+          "Could not load students."
+        );
+      }
     }
   };
 
@@ -124,80 +216,85 @@ function App() {
 
   const loadCompanies = async () => {
     try {
-      const response = await fetch(`${API}/companies`);
+      const response = await fetch(
+        `${API}/companies`
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to load companies");
+        throw new Error(
+          "Failed to load companies"
+        );
       }
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       setCompanies(data);
 
-      if (data.length > 0 && !companyId) {
-        setCompanyId(String(data[0].id));
-      }
-    } catch (error) {
-      console.error(error);
-      setMessage("Could not connect to company backend.");
-    }
-  };
-
-  // =========================
-  // LOAD ELIGIBILITY RESULTS
-  // =========================
-
-  const loadEligibilityResults = async () => {
-    try {
-      const response = await fetch(
-        `${API}/eligibility-results`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to load eligibility results"
+      if (
+        data.length > 0 &&
+        !companyId
+      ) {
+        setCompanyId(
+          String(data[0].id)
         );
       }
-
-      const data = await response.json();
-
-      setEligibilityResults(data);
     } catch (error) {
       console.error(error);
-
-      setMessage(
-        "Could not connect to eligibility results backend."
-      );
     }
   };
 
   // =========================
-  // LOAD PLACEMENT REPORTS
+  // LOAD RESULTS
   // =========================
 
-  const loadPlacementReports = async () => {
-    try {
-      const response = await fetch(
-        `${API}/reports/students`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to load placement reports"
+  const loadEligibilityResults =
+    async () => {
+      try {
+        const response = await fetch(
+          `${API}/eligibility-results`
         );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to load eligibility results"
+          );
+        }
+
+        const data =
+          await response.json();
+
+        setEligibilityResults(data);
+      } catch (error) {
+        console.error(error);
       }
+    };
 
-      const data = await response.json();
+  // =========================
+  // LOAD REPORTS
+  // =========================
 
-      setPlacementReports(data);
-    } catch (error) {
-      console.error(error);
+  const loadPlacementReports =
+    async () => {
+      try {
+        const response = await fetch(
+          `${API}/reports/students`
+        );
 
-      setMessage(
-        "Could not load placement reports."
-      );
-    }
-  };
+        if (!response.ok) {
+          throw new Error(
+            "Failed to load placement reports"
+          );
+        }
+
+        const data =
+          await response.json();
+
+        setPlacementReports(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
   // =========================
   // INITIAL LOAD
@@ -221,7 +318,8 @@ function App() {
   const getStudentName = (id) => {
     const student = students.find(
       (student) =>
-        Number(student.id) === Number(id)
+        Number(student.id) ===
+        Number(id)
     );
 
     return student
@@ -236,7 +334,8 @@ function App() {
   const getCompanyName = (id) => {
     const company = companies.find(
       (company) =>
-        Number(company.id) === Number(id)
+        Number(company.id) ===
+        Number(id)
     );
 
     return company
@@ -248,84 +347,119 @@ function App() {
   // FORMAT DATE
   // =========================
 
-  const formatDateTime = (dateValue) => {
+  const formatDateTime = (
+    dateValue
+  ) => {
     if (!dateValue) {
       return "N/A";
     }
 
-    const date = new Date(dateValue);
+    const date = new Date(
+      dateValue
+    );
 
     if (isNaN(date.getTime())) {
       return dateValue;
     }
 
-    return date.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
+    return date.toLocaleString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }
+    );
   };
 
   // =========================
   // DASHBOARD COUNTS
   // =========================
 
-  const totalStudents = students.length;
-  const totalCompanies = companies.length;
+  const totalStudents =
+    students.length;
 
-  const eligibleStudentIds = new Set();
-  const checkedStudentIds = new Set();
+  const totalCompanies =
+    companies.length;
 
-  eligibilityResults.forEach((item) => {
-    const result = String(
-      item.result || ""
-    ).toLowerCase();
+  const eligibleStudentIds =
+    new Set();
 
-    const id = Number(item.studentId);
+  const checkedStudentIds =
+    new Set();
 
-    if (!id) {
-      return;
+  eligibilityResults.forEach(
+    (item) => {
+      const result = String(
+        item.result || ""
+      ).toLowerCase();
+
+      const id = Number(
+        item.studentId
+      );
+
+      if (!id) {
+        return;
+      }
+
+      checkedStudentIds.add(id);
+
+      if (
+        result.includes(
+          "eligible"
+        ) &&
+        !result.includes(
+          "not eligible"
+        )
+      ) {
+        eligibleStudentIds.add(
+          id
+        );
+      }
     }
-
-    checkedStudentIds.add(id);
-
-    if (
-      result.includes("eligible") &&
-      !result.includes("not eligible")
-    ) {
-      eligibleStudentIds.add(id);
-    }
-  });
+  );
 
   const totalEligible =
     eligibleStudentIds.size;
 
-  const notEligibleStudentIds = new Set();
+  const notEligibleStudentIds =
+    new Set();
 
-  checkedStudentIds.forEach((id) => {
-    if (!eligibleStudentIds.has(id)) {
-      notEligibleStudentIds.add(id);
+  checkedStudentIds.forEach(
+    (id) => {
+      if (
+        !eligibleStudentIds.has(
+          id
+        )
+      ) {
+        notEligibleStudentIds.add(
+          id
+        );
+      }
     }
-  });
+  );
 
   const totalNotEligible =
     notEligibleStudentIds.size;
 
-  const totalPending = Math.max(
-    0,
-    totalStudents -
-      totalEligible -
-      totalNotEligible
-  );
+  const totalPending =
+    Math.max(
+      0,
+      totalStudents -
+        totalEligible -
+        totalNotEligible
+    );
 
   // =========================
-  // STUDENT INPUT
+  // STUDENT FORM
   // =========================
 
-  const handleStudentChange = (event) => {
+  const handleStudentChange = (
+    event
+  ) => {
     setStudentForm({
       ...studentForm,
       [event.target.name]:
@@ -334,133 +468,149 @@ function App() {
   };
 
   // =========================
-  // ADD / UPDATE STUDENT
+  // STUDENT SUBMIT
   // =========================
 
-  const handleStudentSubmit = async (
-    event
-  ) => {
-    event.preventDefault();
+  const handleStudentSubmit =
+    async (event) => {
+      event.preventDefault();
 
-    setMessage("");
+      setMessage("");
 
-    const studentData = {
-      name: studentForm.name,
-      cgpa: Number(studentForm.cgpa),
-      backlogs: Number(
-        studentForm.backlogs
-      ),
-      branch: studentForm.branch,
-      graduationYear: Number(
-        studentForm.graduationYear
-      ),
-    };
+      const studentData = {
+        name: studentForm.name,
+        cgpa: Number(
+          studentForm.cgpa
+        ),
+        backlogs: Number(
+          studentForm.backlogs
+        ),
+        branch: studentForm.branch,
+        graduationYear: Number(
+          studentForm.graduationYear
+        ),
+      };
 
-    try {
-      if (editingStudentId !== null) {
-        const response = await fetch(
-          `${API}/students/${editingStudentId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify(
-              studentData
-            ),
+      try {
+        if (
+          editingStudentId !==
+          null
+        ) {
+          const response =
+            await fetch(
+              `${API}/students/${editingStudentId}`,
+              {
+                method: "PUT",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify(
+                  studentData
+                ),
+              }
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              "Failed to update student"
+            );
           }
-        );
 
-        if (!response.ok) {
-          throw new Error(
-            "Failed to update student"
+          const updatedStudent =
+            await response.json();
+
+          setStudents(
+            students.map(
+              (student) =>
+                student.id ===
+                editingStudentId
+                  ? updatedStudent
+                  : student
+            )
+          );
+
+          setMessage(
+            "Student updated successfully!"
+          );
+
+          setEditingStudentId(null);
+        } else {
+          const response =
+            await fetch(
+              `${API}/students`,
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify(
+                  studentData
+                ),
+              }
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              "Failed to add student"
+            );
+          }
+
+          const newStudent =
+            await response.json();
+
+          setStudents([
+            ...students,
+            newStudent,
+          ]);
+
+          setStudentId(
+            String(
+              newStudent.id
+            )
+          );
+
+          setMessage(
+            "Student added successfully!"
           );
         }
 
-        const updatedStudent =
-          await response.json();
-
-        setStudents(
-          students.map((student) =>
-            student.id ===
-            editingStudentId
-              ? updatedStudent
-              : student
-          )
-        );
-
-        setMessage(
-          "Student updated successfully!"
-        );
-
-        setEditingStudentId(null);
+        setStudentForm({
+          name: "",
+          cgpa: "",
+          backlogs: "",
+          branch: "",
+          graduationYear: "",
+        });
 
         await loadPlacementReports();
-      } else {
-        const response = await fetch(
-          `${API}/students`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify(
-              studentData
-            ),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to add student"
-          );
-        }
-
-        const newStudent =
-          await response.json();
-
-        setStudents([
-          ...students,
-          newStudent,
-        ]);
-
-        setStudentId(
-          String(newStudent.id)
-        );
+      } catch (error) {
+        console.error(error);
 
         setMessage(
-          "Student added successfully!"
+          editingStudentId !==
+            null
+            ? "Failed to update student."
+            : "Failed to add student."
         );
-
-        await loadPlacementReports();
       }
-
-      setStudentForm({
-        name: "",
-        cgpa: "",
-        backlogs: "",
-        branch: "",
-        graduationYear: "",
-      });
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        editingStudentId !== null
-          ? "Failed to update student."
-          : "Failed to add student."
-      );
-    }
-  };
+    };
 
   // =========================
   // EDIT STUDENT
   // =========================
 
-  const handleEditStudent = (student) => {
-    setEditingStudentId(student.id);
+  const handleEditStudent = (
+    student
+  ) => {
+    setEditingStudentId(
+      student.id
+    );
 
     setStudentForm({
       name: student.name,
@@ -471,7 +621,10 @@ function App() {
         student.graduationYear,
     });
 
-    setActiveSection("students");
+    setActiveSection(
+      "students"
+    );
+
     setMessage("");
   };
 
@@ -497,73 +650,74 @@ function App() {
   // DELETE STUDENT
   // =========================
 
-  const handleDeleteStudent = async (
-    id
-  ) => {
-    const confirmDelete =
-      window.confirm(
-        "Are you sure you want to delete this student?"
-      );
-
-    if (!confirmDelete) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${API}/students/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to delete student"
+  const handleDeleteStudent =
+    async (id) => {
+      const confirmDelete =
+        window.confirm(
+          "Are you sure you want to delete this student?"
         );
+
+      if (!confirmDelete) {
+        return;
       }
 
-      const updatedStudents =
-        students.filter(
-          (student) =>
-            student.id !== id
+      try {
+        const response =
+          await fetch(
+            `${API}/students/${id}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to delete student"
+          );
+        }
+
+        const updatedStudents =
+          students.filter(
+            (student) =>
+              student.id !== id
+          );
+
+        setStudents(
+          updatedStudents
         );
 
-      setStudents(updatedStudents);
-
-      if (
-        Number(studentId) === Number(id)
-      ) {
         if (
-          updatedStudents.length > 0
+          Number(studentId) ===
+          Number(id)
         ) {
           setStudentId(
-            String(
-              updatedStudents[0].id
-            )
+            updatedStudents.length >
+              0
+              ? String(
+                  updatedStudents[0]
+                    .id
+                )
+              : ""
           );
-        } else {
-          setStudentId("");
         }
+
+        setMessage(
+          "Student deleted successfully!"
+        );
+
+        await loadPlacementReports();
+        await loadEligibilityResults();
+      } catch (error) {
+        console.error(error);
+
+        setMessage(
+          "Failed to delete student."
+        );
       }
-
-      setMessage(
-        "Student deleted successfully!"
-      );
-
-      await loadPlacementReports();
-      await loadEligibilityResults();
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        "Failed to delete student."
-      );
-    }
-  };
+    };
 
   // =========================
-  // COMPANY INPUT
+  // COMPANY FORM
   // =========================
 
   const handleCompanyChange = (
@@ -577,151 +731,178 @@ function App() {
   };
 
   // =========================
-  // ADD / UPDATE COMPANY
+  // COMPANY SUBMIT
   // =========================
 
-  const handleCompanySubmit = async (
-    event
-  ) => {
-    event.preventDefault();
+  const handleCompanySubmit =
+    async (event) => {
+      event.preventDefault();
 
-    setMessage("");
+      setMessage("");
 
-    const companyData = {
-      companyName:
-        companyForm.companyName,
-      minCgpa: Number(
-        companyForm.minCgpa
-      ),
-      maxBacklogs: Number(
-        companyForm.maxBacklogs
-      ),
-      eligibleBranch:
-        companyForm.eligibleBranch,
-      graduationYear: Number(
-        companyForm.graduationYear
-      ),
-    };
+      const companyData = {
+        companyName:
+          companyForm.companyName,
 
-    try {
-      if (editingCompanyId !== null) {
-        const response = await fetch(
-          `${API}/companies/${editingCompanyId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify(
-              companyData
-            ),
+        minCgpa: Number(
+          companyForm.minCgpa
+        ),
+
+        maxBacklogs: Number(
+          companyForm.maxBacklogs
+        ),
+
+        eligibleBranch:
+          companyForm.eligibleBranch,
+
+        graduationYear: Number(
+          companyForm.graduationYear
+        ),
+      };
+
+      try {
+        if (
+          editingCompanyId !==
+          null
+        ) {
+          const response =
+            await fetch(
+              `${API}/companies/${editingCompanyId}`,
+              {
+                method: "PUT",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify(
+                  companyData
+                ),
+              }
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              "Failed to update company"
+            );
           }
-        );
 
-        if (!response.ok) {
-          throw new Error(
-            "Failed to update company"
+          const updatedCompany =
+            await response.json();
+
+          setCompanies(
+            companies.map(
+              (company) =>
+                company.id ===
+                editingCompanyId
+                  ? updatedCompany
+                  : company
+            )
+          );
+
+          setMessage(
+            "Company updated successfully!"
+          );
+
+          setEditingCompanyId(
+            null
+          );
+        } else {
+          const response =
+            await fetch(
+              `${API}/companies`,
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify(
+                  companyData
+                ),
+              }
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              "Failed to add company"
+            );
+          }
+
+          const newCompany =
+            await response.json();
+
+          setCompanies([
+            ...companies,
+            newCompany,
+          ]);
+
+          setCompanyId(
+            String(
+              newCompany.id
+            )
+          );
+
+          setMessage(
+            "Company added successfully!"
           );
         }
 
-        const updatedCompany =
-          await response.json();
-
-        setCompanies(
-          companies.map((company) =>
-            company.id ===
-            editingCompanyId
-              ? updatedCompany
-              : company
-          )
-        );
-
-        setMessage(
-          "Company updated successfully!"
-        );
-
-        setEditingCompanyId(null);
+        setCompanyForm({
+          companyName: "",
+          minCgpa: "",
+          maxBacklogs: "",
+          eligibleBranch: "",
+          graduationYear: "",
+        });
 
         await loadPlacementReports();
-      } else {
-        const response = await fetch(
-          `${API}/companies`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify(
-              companyData
-            ),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to add company"
-          );
-        }
-
-        const newCompany =
-          await response.json();
-
-        setCompanies([
-          ...companies,
-          newCompany,
-        ]);
-
-        setCompanyId(
-          String(newCompany.id)
-        );
+      } catch (error) {
+        console.error(error);
 
         setMessage(
-          "Company added successfully!"
+          editingCompanyId !==
+            null
+            ? "Failed to update company."
+            : "Failed to add company."
         );
-
-        await loadPlacementReports();
       }
-
-      setCompanyForm({
-        companyName: "",
-        minCgpa: "",
-        maxBacklogs: "",
-        eligibleBranch: "",
-        graduationYear: "",
-      });
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        editingCompanyId !== null
-          ? "Failed to update company."
-          : "Failed to add company."
-      );
-    }
-  };
+    };
 
   // =========================
   // EDIT COMPANY
   // =========================
 
-  const handleEditCompany = (company) => {
-    setEditingCompanyId(company.id);
+  const handleEditCompany = (
+    company
+  ) => {
+    setEditingCompanyId(
+      company.id
+    );
 
     setCompanyForm({
       companyName:
         company.companyName,
+
       minCgpa: company.minCgpa,
+
       maxBacklogs:
         company.maxBacklogs,
+
       eligibleBranch:
         company.eligibleBranch,
+
       graduationYear:
         company.graduationYear,
     });
 
-    setActiveSection("companies");
+    setActiveSection(
+      "companies"
+    );
+
     setMessage("");
   };
 
@@ -747,70 +928,71 @@ function App() {
   // DELETE COMPANY
   // =========================
 
-  const handleDeleteCompany = async (
-    id
-  ) => {
-    const confirmDelete =
-      window.confirm(
-        "Are you sure you want to delete this company?"
-      );
-
-    if (!confirmDelete) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${API}/companies/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to delete company"
+  const handleDeleteCompany =
+    async (id) => {
+      const confirmDelete =
+        window.confirm(
+          "Are you sure you want to delete this company?"
         );
+
+      if (!confirmDelete) {
+        return;
       }
 
-      const updatedCompanies =
-        companies.filter(
-          (company) =>
-            company.id !== id
+      try {
+        const response =
+          await fetch(
+            `${API}/companies/${id}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to delete company"
+          );
+        }
+
+        const updatedCompanies =
+          companies.filter(
+            (company) =>
+              company.id !== id
+          );
+
+        setCompanies(
+          updatedCompanies
         );
 
-      setCompanies(updatedCompanies);
-
-      if (
-        Number(companyId) === Number(id)
-      ) {
         if (
-          updatedCompanies.length > 0
+          Number(companyId) ===
+          Number(id)
         ) {
           setCompanyId(
-            String(
-              updatedCompanies[0].id
-            )
+            updatedCompanies.length >
+              0
+              ? String(
+                  updatedCompanies[0]
+                    .id
+                )
+              : ""
           );
-        } else {
-          setCompanyId("");
         }
+
+        setMessage(
+          "Company deleted successfully!"
+        );
+
+        await loadPlacementReports();
+        await loadEligibilityResults();
+      } catch (error) {
+        console.error(error);
+
+        setMessage(
+          "Failed to delete company."
+        );
       }
-
-      setMessage(
-        "Company deleted successfully!"
-      );
-
-      await loadPlacementReports();
-      await loadEligibilityResults();
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        "Failed to delete company."
-      );
-    }
-  };
+    };
 
   // =========================
   // CHECK ELIGIBILITY
@@ -830,14 +1012,17 @@ function App() {
       setMessage("");
 
       try {
-        const response = await fetch(
-          `${API}/eligibility?studentId=${studentId}&companyId=${companyId}`
-        );
+        const response =
+          await fetch(
+            `${API}/eligibility?studentId=${studentId}&companyId=${companyId}`
+          );
 
         const result =
           await response.text();
 
-        setEligibilityResult(result);
+        setEligibilityResult(
+          result
+        );
 
         if (!response.ok) {
           return;
@@ -858,14 +1043,20 @@ function App() {
   // RESULT STYLE
   // =========================
 
-  const getResultStyle = (result) => {
+  const getResultStyle = (
+    result
+  ) => {
     const text = String(
       result || ""
     ).toLowerCase();
 
     if (
-      text.includes("eligible") &&
-      !text.includes("not eligible")
+      text.includes(
+        "eligible"
+      ) &&
+      !text.includes(
+        "not eligible"
+      )
     ) {
       return {
         color: "#15803d",
@@ -917,15 +1108,23 @@ function App() {
   // LOGIN
   // =========================
 
-  const handleLogin = (userData) => {
+  const handleLogin = (
+    userData
+  ) => {
     setIsLoggedIn(true);
 
     setCurrentUser({
-      username: userData.username,
-      role: userData.role,
+      username:
+        userData.username,
+
+      role:
+        userData.role,
     });
 
-    setActiveSection("dashboard");
+    setActiveSection(
+      "dashboard"
+    );
+
     setMessage("");
   };
 
@@ -934,9 +1133,21 @@ function App() {
   // =========================
 
   const handleLogout = () => {
-    localStorage.removeItem("loggedIn");
-    localStorage.removeItem("username");
-    localStorage.removeItem("userRole");
+    localStorage.removeItem(
+      "loggedIn"
+    );
+
+    localStorage.removeItem(
+      "username"
+    );
+
+    localStorage.removeItem(
+      "userRole"
+    );
+
+    localStorage.removeItem(
+      "authToken"
+    );
 
     setIsLoggedIn(false);
 
@@ -945,7 +1156,10 @@ function App() {
       role: "USER",
     });
 
-    setActiveSection("dashboard");
+    setActiveSection(
+      "dashboard"
+    );
+
     setSelectedReport(null);
     setEligibilityResult("");
     setMessage("");
@@ -958,11 +1172,12 @@ function App() {
   const handleNavigation = (
     section
   ) => {
-    setActiveSection(section);
+    setActiveSection(
+      section
+    );
 
-    if (section !== "reports") {
-      setSelectedReport(null);
-    }
+    setSelectedReport(null);
+    setMessage("");
 
     if (section === "results") {
       loadEligibilityResults();
@@ -971,8 +1186,6 @@ function App() {
     if (section === "reports") {
       loadPlacementReports();
     }
-
-    setMessage("");
   };
 
   // =========================
@@ -987,6 +1200,7 @@ function App() {
   }) => {
     return (
       <div className="dashboard-card">
+
         <p className="dashboard-title">
           {title}
         </p>
@@ -1003,6 +1217,7 @@ function App() {
         <p className="dashboard-description">
           {description}
         </p>
+
       </div>
     );
   };
@@ -1012,23 +1227,26 @@ function App() {
   // =========================
 
   if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <Login
+        onLogin={handleLogin}
+      />
+    );
   }
 
   // =========================
-  // MAIN APPLICATION
+  // APPLICATION
   // =========================
 
   return (
     <div className="app">
 
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* HEADER */}
 
       <header className="header">
 
         <div>
+
           <h1>
             Placement Eligibility Checker
           </h1>
@@ -1037,19 +1255,14 @@ function App() {
             Student Placement Management
             System
           </p>
+
         </div>
 
       </header>
 
-      {/* =========================
-          APP LAYOUT
-      ========================= */}
-
       <div className="app-layout">
 
-        {/* =========================
-            SIDEBAR
-        ========================= */}
+        {/* SIDEBAR */}
 
         <aside className="sidebar">
 
@@ -1060,11 +1273,15 @@ function App() {
             </div>
 
             <div>
-              <h2>Placement</h2>
+
+              <h2>
+                Placement
+              </h2>
 
               <p>
                 Management System
               </p>
+
             </div>
 
           </div>
@@ -1073,44 +1290,49 @@ function App() {
 
           <nav className="sidebar-nav">
 
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                className={`nav-button ${
-                  activeSection === item.id
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleNavigation(
+            {visibleNavItems.map(
+              (item) => (
+                <button
+                  key={item.id}
+                  className={`nav-button ${
+                    activeSection ===
                     item.id
-                  )
-                }
-              >
-                <span className="nav-icon">
-                  {item.icon}
-                </span>
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    handleNavigation(
+                      item.id
+                    )
+                  }
+                >
 
-                <span>
-                  {item.label}
-                </span>
-              </button>
-            ))}
+                  <span className="nav-icon">
+                    {item.icon}
+                  </span>
+
+                  <span>
+                    {item.label}
+                  </span>
+
+                </button>
+              )
+            )}
 
           </nav>
-
-          {/* USER AREA */}
 
           <div className="sidebar-footer">
 
             <div className="user-info">
 
               <div className="user-avatar">
+
                 {currentUser.username
                   ? currentUser.username
                       .charAt(0)
                       .toUpperCase()
                   : "U"}
+
               </div>
 
               <div className="user-details">
@@ -1131,7 +1353,9 @@ function App() {
 
             <button
               className="logout-button"
-              onClick={handleLogout}
+              onClick={
+                handleLogout
+              }
             >
               Logout
             </button>
@@ -1140,15 +1364,9 @@ function App() {
 
         </aside>
 
-        {/* =========================
-            MAIN CONTENT
-        ========================= */}
+        {/* MAIN */}
 
         <main className="main-content">
-
-          {/* =========================
-              MESSAGE
-          ========================= */}
 
           {message && (
             <div className="message">
@@ -1167,12 +1385,16 @@ function App() {
               <div className="page-heading">
 
                 <div>
-                  <h2>Dashboard</h2>
+
+                  <h2>
+                    Dashboard
+                  </h2>
 
                   <p>
                     Overview of your placement
                     management system.
                   </p>
+
                 </div>
 
               </div>
@@ -1181,35 +1403,45 @@ function App() {
 
                 <DashboardCard
                   title="Total Students"
-                  value={totalStudents}
+                  value={
+                    totalStudents
+                  }
                   description="Students registered"
                   valueColor="#2563eb"
                 />
 
                 <DashboardCard
                   title="Total Companies"
-                  value={totalCompanies}
+                  value={
+                    totalCompanies
+                  }
                   description="Companies registered"
                   valueColor="#7c3aed"
                 />
 
                 <DashboardCard
                   title="Eligible Students"
-                  value={totalEligible}
+                  value={
+                    totalEligible
+                  }
                   description="Unique students eligible"
                   valueColor="#16a34a"
                 />
 
                 <DashboardCard
                   title="Not Eligible Students"
-                  value={totalNotEligible}
+                  value={
+                    totalNotEligible
+                  }
                   description="Unique students not eligible"
                   valueColor="#dc2626"
                 />
 
                 <DashboardCard
                   title="Pending / Not Checked"
-                  value={totalPending}
+                  value={
+                    totalPending
+                  }
                   description="Students not checked yet"
                   valueColor="#ea580c"
                 />
@@ -1224,42 +1456,44 @@ function App() {
 
                 <p>
                   Use the navigation menu to
-                  manage students, companies,
-                  eligibility checks, results,
-                  and placement reports.
+                  manage your placement system.
                 </p>
 
                 <div className="quick-action-buttons">
 
-                  <button
-                    onClick={() =>
-                      handleNavigation(
-                        "students"
-                      )
-                    }
-                  >
-                    Manage Students
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() =>
+                          handleNavigation(
+                            "students"
+                          )
+                        }
+                      >
+                        Manage Students
+                      </button>
 
-                  <button
-                    onClick={() =>
-                      handleNavigation(
-                        "companies"
-                      )
-                    }
-                  >
-                    Manage Companies
-                  </button>
+                      <button
+                        onClick={() =>
+                          handleNavigation(
+                            "companies"
+                          )
+                        }
+                      >
+                        Manage Companies
+                      </button>
 
-                  <button
-                    onClick={() =>
-                      handleNavigation(
-                        "eligibility"
-                      )
-                    }
-                  >
-                    Check Eligibility
-                  </button>
+                      <button
+                        onClick={() =>
+                          handleNavigation(
+                            "eligibility"
+                          )
+                        }
+                      >
+                        Check Eligibility
+                      </button>
+                    </>
+                  )}
 
                   <button
                     onClick={() =>
@@ -1283,23 +1517,26 @@ function App() {
           ========================= */}
 
           {activeSection ===
-            "students" && (
+            "students" &&
+            isAdmin && (
             <section className="page-section">
 
               <div className="page-heading">
 
                 <div>
-                  <h2>Students</h2>
+
+                  <h2>
+                    Students
+                  </h2>
 
                   <p>
                     Add, edit, and manage
                     student records.
                   </p>
+
                 </div>
 
               </div>
-
-              {/* ADD / EDIT STUDENT */}
 
               <section className="card">
 
@@ -1388,10 +1625,12 @@ function App() {
                   <div className="form-actions">
 
                     <button type="submit">
+
                       {editingStudentId !==
                       null
                         ? "Update Student"
                         : "Add Student"}
+
                     </button>
 
                     {editingStudentId !==
@@ -1413,13 +1652,12 @@ function App() {
 
               </section>
 
-              {/* STUDENT LIST */}
-
               <section className="card">
 
                 <div className="section-title-row">
 
                   <div>
+
                     <h3>
                       Student List
                     </h3>
@@ -1428,6 +1666,7 @@ function App() {
                       {students.length}{" "}
                       student(s) registered.
                     </p>
+
                   </div>
 
                 </div>
@@ -1443,6 +1682,7 @@ function App() {
                     <table>
 
                       <thead>
+
                         <tr>
                           <th>ID</th>
                           <th>Name</th>
@@ -1454,6 +1694,7 @@ function App() {
                           </th>
                           <th>Actions</th>
                         </tr>
+
                       </thead>
 
                       <tbody>
@@ -1546,24 +1787,26 @@ function App() {
           ========================= */}
 
           {activeSection ===
-            "companies" && (
+            "companies" &&
+            isAdmin && (
             <section className="page-section">
 
               <div className="page-heading">
 
                 <div>
-                  <h2>Companies</h2>
+
+                  <h2>
+                    Companies
+                  </h2>
 
                   <p>
                     Manage companies and
-                    their placement
-                    eligibility criteria.
+                    placement criteria.
                   </p>
+
                 </div>
 
               </div>
-
-              {/* ADD / EDIT COMPANY */}
 
               <section className="card">
 
@@ -1652,10 +1895,12 @@ function App() {
                   <div className="form-actions">
 
                     <button type="submit">
+
                       {editingCompanyId !==
                       null
                         ? "Update Company"
                         : "Add Company"}
+
                     </button>
 
                     {editingCompanyId !==
@@ -1677,22 +1922,21 @@ function App() {
 
               </section>
 
-              {/* COMPANY LIST */}
-
               <section className="card">
 
                 <div className="section-title-row">
 
                   <div>
+
                     <h3>
                       Company List
                     </h3>
 
                     <p>
                       {companies.length}{" "}
-                      company(ies)
-                      registered.
+                      company(ies) registered.
                     </p>
+
                   </div>
 
                 </div>
@@ -1708,6 +1952,7 @@ function App() {
                     <table>
 
                       <thead>
+
                         <tr>
                           <th>ID</th>
                           <th>Company</th>
@@ -1723,6 +1968,7 @@ function App() {
                           </th>
                           <th>Actions</th>
                         </tr>
+
                       </thead>
 
                       <tbody>
@@ -1819,21 +2065,23 @@ function App() {
           ========================= */}
 
           {activeSection ===
-            "eligibility" && (
+            "eligibility" &&
+            isAdmin && (
             <section className="page-section">
 
               <div className="page-heading">
 
                 <div>
+
                   <h2>
                     Eligibility Check
                   </h2>
 
                   <p>
-                    Check whether a student
-                    is eligible for a specific
-                    company.
+                    Check placement eligibility
+                    for a student and company.
                   </p>
+
                 </div>
 
               </div>
@@ -1847,7 +2095,7 @@ function App() {
 
                 <p>
                   Select a student and
-                  company to perform an
+                  company to perform the
                   eligibility check.
                 </p>
 
@@ -1864,11 +2112,8 @@ function App() {
                         event.target.value
                       )
                     }
-                    disabled={
-                      students.length ===
-                      0
-                    }
                   >
+
                     <option value="">
                       Select Student
                     </option>
@@ -1903,11 +2148,8 @@ function App() {
                         event.target.value
                       )
                     }
-                    disabled={
-                      companies.length ===
-                      0
-                    }
                   >
+
                     <option value="">
                       Select Company
                     </option>
@@ -1939,11 +2181,7 @@ function App() {
                     }
                     disabled={
                       !studentId ||
-                      !companyId ||
-                      students.length ===
-                        0 ||
-                      companies.length ===
-                        0
+                      !companyId
                     }
                   >
                     Check Eligibility
@@ -1985,15 +2223,16 @@ function App() {
               <div className="page-heading">
 
                 <div>
+
                   <h2>
                     Eligibility Results
                   </h2>
 
                   <p>
-                    View all saved
-                    student-company
-                    eligibility results.
+                    View saved eligibility
+                    results.
                   </p>
+
                 </div>
 
                 <button
@@ -2020,6 +2259,7 @@ function App() {
                     <table>
 
                       <thead>
+
                         <tr>
                           <th>ID</th>
                           <th>Student</th>
@@ -2030,6 +2270,7 @@ function App() {
                             Checked At
                           </th>
                         </tr>
+
                       </thead>
 
                       <tbody>
@@ -2139,15 +2380,16 @@ function App() {
               <div className="page-heading">
 
                 <div>
+
                   <h2>
                     Placement Reports
                   </h2>
 
                   <p>
-                    View placement status and
-                    detailed company-wise
-                    eligibility.
+                    View student placement
+                    summaries.
                   </p>
+
                 </div>
 
                 <button
@@ -2165,6 +2407,7 @@ function App() {
                 <div className="report-header">
 
                   <div>
+
                     <h3>
                       Student Placement
                       Reports
@@ -2172,9 +2415,9 @@ function App() {
 
                     <p>
                       Search students and
-                      view their placement
-                      status.
+                      view placement status.
                     </p>
+
                   </div>
 
                   <input
@@ -2211,6 +2454,7 @@ function App() {
                     <table>
 
                       <thead>
+
                         <tr>
                           <th>Student</th>
                           <th>CGPA</th>
@@ -2224,6 +2468,7 @@ function App() {
                           <th>Status</th>
                           <th>Action</th>
                         </tr>
+
                       </thead>
 
                       <tbody>
@@ -2256,7 +2501,9 @@ function App() {
                               </td>
 
                               <td>
-                                {student.cgpa}
+                                {
+                                  student.cgpa
+                                }
                               </td>
 
                               <td>
@@ -2278,19 +2525,23 @@ function App() {
                               </td>
 
                               <td>
+
                                 <span className="eligible-text">
                                   {
                                     student.eligibleCompanies
                                   }
                                 </span>
+
                               </td>
 
                               <td>
+
                                 <span className="not-eligible-text">
                                   {
                                     student.notEligibleCompanies
                                   }
                                 </span>
+
                               </td>
 
                               <td>
@@ -2316,15 +2567,11 @@ function App() {
                               <td>
 
                                 <button
-                                  onClick={() => {
+                                  onClick={() =>
                                     setSelectedReport(
                                       student
-                                    );
-
-                                    setActiveSection(
-                                      "reports"
-                                    );
-                                  }}
+                                    )
+                                  }
                                 >
                                   View Details
                                 </button>
@@ -2344,26 +2591,22 @@ function App() {
 
               </section>
 
-              {/* =========================
-                  REPORT DETAILS
-              ========================= */}
-
               {selectedReport && (
                 <section className="card">
 
                   <div className="details-header">
 
                     <div>
+
                       <h3>
                         Placement Details
                       </h3>
 
                       <p>
                         Detailed company
-                        eligibility results
-                        for the selected
-                        student.
+                        eligibility results.
                       </p>
+
                     </div>
 
                     <button
@@ -2494,6 +2737,7 @@ function App() {
                       <table>
 
                         <thead>
+
                           <tr>
                             <th>Company</th>
                             <th>Result</th>
@@ -2502,6 +2746,7 @@ function App() {
                               Checked At
                             </th>
                           </tr>
+
                         </thead>
 
                         <tbody>
@@ -2524,6 +2769,7 @@ function App() {
                                 </td>
 
                                 <td>
+
                                   <span
                                     style={getResultStyle(
                                       company.result
@@ -2533,6 +2779,7 @@ function App() {
                                       company.result
                                     }
                                   </span>
+
                                 </td>
 
                                 <td>

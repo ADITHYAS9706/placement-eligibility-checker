@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import placement_api.model.User;
+import placement_api.service.JwtService;
 import placement_api.service.UserService;
 
 @RestController
@@ -16,9 +17,14 @@ import placement_api.service.UserService;
 public class AuthController {
 
     private final UserService userService;
+    private final JwtService jwtService;
 
-    public AuthController(UserService userService) {
+    public AuthController(
+            UserService userService,
+            JwtService jwtService) {
+
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
     // =========================
@@ -36,7 +42,9 @@ public class AuthController {
 
                 return ResponseEntity
                         .badRequest()
-                        .body("Username is required.");
+                        .body(
+                                "Username is required."
+                        );
             }
 
             if (request.password == null ||
@@ -57,17 +65,19 @@ public class AuthController {
                 role = "STUDENT";
             }
 
-            User user = userService.registerUser(
-                    request.username.trim(),
-                    request.password,
-                    role.toUpperCase()
-            );
+            User user =
+                    userService.registerUser(
+                            request.username.trim(),
+                            request.password,
+                            role.toUpperCase()
+                    );
 
             return ResponseEntity.ok(
                     new AuthResponse(
                             "Registration successful.",
                             user.getUsername(),
-                            user.getRole()
+                            user.getRole(),
+                            null
                     )
             );
 
@@ -92,7 +102,9 @@ public class AuthController {
 
             return ResponseEntity
                     .badRequest()
-                    .body("Username is required.");
+                    .body(
+                            "Username is required."
+                    );
         }
 
         if (request.password == null ||
@@ -100,13 +112,16 @@ public class AuthController {
 
             return ResponseEntity
                     .badRequest()
-                    .body("Password is required.");
+                    .body(
+                            "Password is required."
+                    );
         }
 
-        User user = userService.authenticateUser(
-                request.username.trim(),
-                request.password
-        );
+        User user =
+                userService.authenticateUser(
+                        request.username.trim(),
+                        request.password
+                );
 
         if (user == null) {
 
@@ -117,11 +132,15 @@ public class AuthController {
                     );
         }
 
+        String token =
+                jwtService.generateToken(user);
+
         return ResponseEntity.ok(
                 new AuthResponse(
                         "Login successful.",
                         user.getUsername(),
-                        user.getRole()
+                        user.getRole(),
+                        token
                 )
         );
     }
@@ -156,15 +175,18 @@ public class AuthController {
         public String message;
         public String username;
         public String role;
+        public String token;
 
         public AuthResponse(
                 String message,
                 String username,
-                String role) {
+                String role,
+                String token) {
 
             this.message = message;
             this.username = username;
             this.role = role;
+            this.token = token;
         }
     }
 }

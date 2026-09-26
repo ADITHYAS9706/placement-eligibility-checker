@@ -21,25 +21,10 @@ public class SecurityConfig {
 
         http
             .csrf(csrf -> csrf.disable())
-
+            .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
-
-                // Authentication endpoints
-                .requestMatchers(
-                    "/api/auth/**"
-                ).permitAll()
-
-                // Existing APIs temporarily accessible
-                .requestMatchers(
-                    "/api/students/**",
-                    "/api/companies/**",
-                    "/api/eligibility/**",
-                    "/api/eligibility-results/**",
-                    "/api/reports/**"
-                ).permitAll()
-
-                // Everything else
-                .anyRequest().authenticated()
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().permitAll()
             );
 
         return http.build();
