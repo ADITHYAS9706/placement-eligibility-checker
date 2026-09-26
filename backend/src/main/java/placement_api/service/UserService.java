@@ -22,6 +22,10 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // =========================
+    // REGISTER USER
+    // =========================
+
     public User registerUser(
             String username,
             String password,
@@ -49,6 +53,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // =========================
+    // VALIDATE LOGIN
+    // =========================
+
     public boolean validateLogin(
             String username,
             String password) {
@@ -64,5 +72,33 @@ public class UserService {
                 password,
                 user.get().getPassword()
         );
+    }
+
+    // =========================
+    // AUTHENTICATE USER
+    // =========================
+
+    public User authenticateUser(
+            String username,
+            String password) {
+
+        Optional<User> user =
+                userRepository.findByUsername(username);
+
+        if (user.isEmpty()) {
+            return null;
+        }
+
+        boolean passwordMatches =
+                passwordEncoder.matches(
+                        password,
+                        user.get().getPassword()
+                );
+
+        if (!passwordMatches) {
+            return null;
+        }
+
+        return user.get();
     }
 }

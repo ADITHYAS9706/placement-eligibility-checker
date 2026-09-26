@@ -45,13 +45,15 @@ public class AuthController {
                 return ResponseEntity
                         .badRequest()
                         .body(
-                            "Password must contain at least 6 characters."
+                                "Password must contain at least 6 characters."
                         );
             }
 
             String role = request.role;
 
-            if (role == null || role.trim().isEmpty()) {
+            if (role == null ||
+                role.trim().isEmpty()) {
+
                 role = "STUDENT";
             }
 
@@ -101,24 +103,25 @@ public class AuthController {
                     .body("Password is required.");
         }
 
-        boolean valid =
-                userService.validateLogin(
-                        request.username.trim(),
-                        request.password
-                );
+        User user = userService.authenticateUser(
+                request.username.trim(),
+                request.password
+        );
 
-        if (!valid) {
+        if (user == null) {
 
             return ResponseEntity
                     .status(401)
-                    .body("Invalid username or password.");
+                    .body(
+                            "Invalid username or password."
+                    );
         }
 
         return ResponseEntity.ok(
                 new AuthResponse(
                         "Login successful.",
-                        request.username.trim(),
-                        "USER"
+                        user.getUsername(),
+                        user.getRole()
                 )
         );
     }
