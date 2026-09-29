@@ -9,8 +9,8 @@ services:
     runtime: docker
     rootDir: backend
     region: singapore
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
     envVars:
       - key: DATABASE_URL
@@ -38,4 +38,7 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://placement-api.onrender.com
+        fromService:
+          type: web
+          name: placement-api
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
