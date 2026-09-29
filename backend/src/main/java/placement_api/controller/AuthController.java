@@ -1,7 +1,6 @@
 package placement_api.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,10 +12,6 @@ import placement_api.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {
-    "http://localhost:4173",
-    "http://localhost:5173"
-})
 public class AuthController {
 
     private final UserService userService;
@@ -41,17 +36,15 @@ public class AuthController {
         try {
 
             if (request.username == null ||
-                request.username.trim().isEmpty()) {
+                    request.username.trim().isEmpty()) {
 
                 return ResponseEntity
                         .badRequest()
-                        .body(
-                                "Username is required."
-                        );
+                        .body("Username is required.");
             }
 
             if (request.password == null ||
-                request.password.length() < 6) {
+                    request.password.length() < 6) {
 
                 return ResponseEntity
                         .badRequest()
@@ -63,7 +56,7 @@ public class AuthController {
             String role = request.role;
 
             if (role == null ||
-                role.trim().isEmpty()) {
+                    role.trim().isEmpty()) {
 
                 role = "STUDENT";
             }
@@ -101,23 +94,19 @@ public class AuthController {
             @RequestBody LoginRequest request) {
 
         if (request.username == null ||
-            request.username.trim().isEmpty()) {
+                request.username.trim().isEmpty()) {
 
             return ResponseEntity
                     .badRequest()
-                    .body(
-                            "Username is required."
-                    );
+                    .body("Username is required.");
         }
 
         if (request.password == null ||
-            request.password.isEmpty()) {
+                request.password.isEmpty()) {
 
             return ResponseEntity
                     .badRequest()
-                    .body(
-                            "Password is required."
-                    );
+                    .body("Password is required.");
         }
 
         User user =
@@ -130,9 +119,7 @@ public class AuthController {
 
             return ResponseEntity
                     .status(401)
-                    .body(
-                            "Invalid username or password."
-                    );
+                    .body("Invalid username or password.");
         }
 
         String token =

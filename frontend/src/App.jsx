@@ -1,2827 +1,339 @@
 import { useEffect, useState } from "react";
-import "./App.css";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  BriefcaseBusiness,
+  Building2,
+  Check,
+  ChevronRight,
+  ClipboardCheck,
+  GraduationCap,
+  LayoutDashboard,
+  LogOut,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import Login from "./Login";
-import { apiFetch } from "./api";
+import "./App.css";
 
-const API = "http://localhost:8080/api";
-
-const navItems = [
-  {
-    id: "dashboard",
-    icon: "▦",
-    label: "Dashboard",
-  },
-  {
-    id: "students",
-    icon: "👨‍🎓",
-    label: "Students",
-  },
-  {
-    id: "companies",
-    icon: "🏢",
-    label: "Companies",
-  },
-  {
-    id: "eligibility",
-    icon: "✓",
-    label: "Eligibility",
-  },
-  {
-    id: "results",
-    icon: "📋",
-    label: "Results",
-  },
-  {
-    id: "reports",
-    icon: "📊",
-    label: "Reports",
-  },
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const API_URL = configuredApiUrl
+  ? `${configuredApiUrl.startsWith("http") ? "" : "https://"}${configuredApiUrl}`
+  : "http://localhost:8080";
+const EMPTY_STUDENT = { name: "", cgpa: "", backlogs: "0", branch: "", graduationYear: "" };
+const EMPTY_COMPANY = { companyName: "", minCgpa: "", maxBacklogs: "0", eligibleBranch: "", graduationYear: "" };
+const NAV_ITEMS = [
+  { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+  { id: "students", label: "Students", icon: GraduationCap },
+  { id: "companies", label: "Companies", icon: Building2 },
+  { id: "eligibility", label: "Eligibility", icon: ClipboardCheck },
+  { id: "results", label: "Results", icon: BriefcaseBusiness },
 ];
 
+async function request(path, options = {}) {
+  const token = localStorage.getItem("authToken");
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  const text = await response.text();
+  if (response.status === 401) {
+    ["loggedIn", "username", "userRole", "authToken"].forEach((key) => localStorage.removeItem(key));
+    window.location.reload();
+    throw new Error("Your session expired. Please sign in again.");
+  }
+  if (!response.ok) throw new Error(text || `Request failed (${response.status}).`);
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 function App() {
-  // =========================
-  // AUTHENTICATION
-  // =========================
+  const [loggedIn, setLoggedIn] = useState(localStorage.getItem("loggedIn") === "true");
+  const [user, setUser] = useState({ username: localStorage.getItem("username") || "", role: localStorage.getItem("userRole") || "" });
+  const [activePage, setActivePage] = useState("dashboard");
+  const [students, setStudents] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [results, setResults] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(localStorage.getItem("loggedIn") === "true");
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(EMPTY_STUDENT);
+  const [search, setSearch] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const [checkResult, setCheckResult] = useState("");
 
-  const [isLoggedIn, setIsLoggedIn] =
-    useState(
-      () =>
-        localStorage.getItem(
-          "loggedIn"
-        ) === "true"
-    );
-
-  const [currentUser, setCurrentUser] =
-    useState(() => ({
-      username:
-        localStorage.getItem(
-          "username"
-        ) || "",
-
-      role:
-        localStorage.getItem(
-          "userRole"
-        ) || "USER",
-    }));
-
-  // =========================
-  // NAVIGATION
-  // =========================
-
-  const [activeSection, setActiveSection] =
-    useState("dashboard");
-
-  // =========================
-  // STUDENTS
-  // =========================
-
-  const [students, setStudents] =
-    useState([]);
-
-  const [studentForm, setStudentForm] =
-    useState({
-      name: "",
-      cgpa: "",
-      backlogs: "",
-      branch: "",
-      graduationYear: "",
-    });
-
-  const [editingStudentId, setEditingStudentId] =
-    useState(null);
-
-  // =========================
-  // COMPANIES
-  // =========================
-
-  const [companies, setCompanies] =
-    useState([]);
-
-  const [companyForm, setCompanyForm] =
-    useState({
-      companyName: "",
-      minCgpa: "",
-      maxBacklogs: "",
-      eligibleBranch: "",
-      graduationYear: "",
-    });
-
-  const [editingCompanyId, setEditingCompanyId] =
-    useState(null);
-
-  // =========================
-  // ELIGIBILITY
-  // =========================
-
-  const [studentId, setStudentId] =
-    useState("");
-
-  const [companyId, setCompanyId] =
-    useState("");
-
-  const [eligibilityResult, setEligibilityResult] =
-    useState("");
-
-  // =========================
-  // RESULTS
-  // =========================
-
-  const [eligibilityResults, setEligibilityResults] =
-    useState([]);
-
-  // =========================
-  // REPORTS
-  // =========================
-
-  const [placementReports, setPlacementReports] =
-    useState([]);
-
-  const [reportSearch, setReportSearch] =
-    useState("");
-
-  const [selectedReport, setSelectedReport] =
-    useState(null);
-
-  // =========================
-  // MESSAGE
-  // =========================
-
-  const [message, setMessage] =
-    useState("");
-
-  // =========================
-  // ROLE
-  // =========================
-
-  const isAdmin =
-    currentUser.role === "ADMIN";
-
-  const visibleNavItems = isAdmin
-    ? navItems
-    : navItems.filter(
-        (item) =>
-          item.id === "dashboard" ||
-          item.id === "results" ||
-          item.id === "reports"
-      );
-
-  // =========================
-  // LOAD STUDENTS
-  // =========================
-
-  const loadStudents = async () => {
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
     try {
-      const response = await apiFetch(
-        `${API}/students`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to load students"
-        );
-      }
-
-      const data =
-        await response.json();
-
-      setStudents(data);
-
-      if (
-        data.length > 0 &&
-        !studentId
-      ) {
-        setStudentId(
-          String(data[0].id)
-        );
-      }
-    } catch (error) {
-      console.error(error);
-
-      if (
-        error.message !==
-        "Unauthorized"
-      ) {
-        setMessage(
-          "Could not load students."
-        );
-      }
+      const [studentData, companyData, resultData, summaryData] = await Promise.all([
+        request("/api/students"),
+        request("/api/companies"),
+        request("/api/eligibility-results"),
+        request("/api/reports/summary"),
+      ]);
+      setStudents(Array.isArray(studentData) ? studentData : []);
+      setCompanies(Array.isArray(companyData) ? companyData : []);
+      setResults(Array.isArray(resultData) ? resultData : []);
+      setSummary(summaryData || {});
+    } catch (loadError) {
+      setError(loadError.message || "Could not load placement data. Check that the backend is running.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // =========================
-  // LOAD COMPANIES
-  // =========================
-
-  const loadCompanies = async () => {
-    try {
-      const response = await apiFetch(
-        `${API}/companies`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to load companies"
-        );
-      }
-
-      const data =
-        await response.json();
-
-      setCompanies(data);
-
-      if (
-        data.length > 0 &&
-        !companyId
-      ) {
-        setCompanyId(
-          String(data[0].id)
-        );
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // =========================
-  // LOAD RESULTS
-
-  // =========================
-
-  const loadEligibilityResults =
-    async () => {
-      try {
-        const response = await apiFetch(
-          `${API}/eligibility-results`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to load eligibility results"
-          );
-        }
-
-        const data =
-          await response.json();
-
-        setEligibilityResults(data);
-      } catch (error) {
-        console.error(error);
-      }
+  useEffect(() => {
+    if (!loggedIn) return undefined;
+    let active = true;
+    Promise.all([
+      request("/api/students"),
+      request("/api/companies"),
+      request("/api/eligibility-results"),
+      request("/api/reports/summary"),
+    ])
+      .then(([studentData, companyData, resultData, summaryData]) => {
+        if (!active) return;
+        setStudents(Array.isArray(studentData) ? studentData : []);
+        setCompanies(Array.isArray(companyData) ? companyData : []);
+        setResults(Array.isArray(resultData) ? resultData : []);
+        setSummary(summaryData || {});
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message || "Could not load placement data. Check that the backend is running.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
     };
+  }, [loggedIn]);
 
-  // =========================
-  // LOAD REPORTS
-  // =========================
-
-  const loadPlacementReports =
-    async () => {
-      try {
-        const response = await apiFetch(
-          `${API}/reports/students`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to load placement reports"
-          );
-        }
-
-        const data =
-          await response.json();
-
-        setPlacementReports(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-  // =========================
-  // INITIAL LOAD
-  // =========================
-
- useEffect(() => {
-  if (!isLoggedIn) {
-    return;
-  }
-
-  // Only ADMIN can load students and companies
-  if (isAdmin) {
-    loadStudents();
-    loadCompanies();
-  }
-
-  // Load results and reports
-  loadEligibilityResults();
-  loadPlacementReports();
-}, [isLoggedIn, isAdmin]);
-
-  // =========================
-  // FIND STUDENT
-  // =========================
-
-  const getStudentName = (id) => {
-    const student = students.find(
-      (student) =>
-        Number(student.id) ===
-        Number(id)
-    );
-
-    return student
-      ? student.name
-      : "Unknown Student";
+  const handleLogin = (loginData) => {
+    setUser(loginData);
+    setLoggedIn(true);
+    setActivePage("dashboard");
   };
-
-  // =========================
-  // FIND COMPANY
-  // =========================
-
-  const getCompanyName = (id) => {
-    const company = companies.find(
-      (company) =>
-        Number(company.id) ===
-        Number(id)
-    );
-
-    return company
-      ? company.companyName
-      : "Unknown Company";
-  };
-
-  // =========================
-  // FORMAT DATE
-  // =========================
-
-  const formatDateTime = (
-    dateValue
-  ) => {
-    if (!dateValue) {
-      return "N/A";
-    }
-
-    const date = new Date(
-      dateValue
-    );
-
-    if (isNaN(date.getTime())) {
-      return dateValue;
-    }
-
-    return date.toLocaleString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }
-    );
-  };
-
-  // =========================
-  // DASHBOARD COUNTS
-  // =========================
-
-  const totalStudents =
-    students.length;
-
-  const totalCompanies =
-    companies.length;
-
-  const eligibleStudentIds =
-    new Set();
-
-  const checkedStudentIds =
-    new Set();
-
-  eligibilityResults.forEach(
-    (item) => {
-      const result = String(
-        item.result || ""
-      ).toLowerCase();
-
-      const id = Number(
-        item.studentId
-      );
-
-      if (!id) {
-        return;
-      }
-
-      checkedStudentIds.add(id);
-
-      if (
-        result.includes(
-          "eligible"
-        ) &&
-        !result.includes(
-          "not eligible"
-        )
-      ) {
-        eligibleStudentIds.add(
-          id
-        );
-      }
-    }
-  );
-
-  const totalEligible =
-    eligibleStudentIds.size;
-
-  const notEligibleStudentIds =
-    new Set();
-
-  checkedStudentIds.forEach(
-    (id) => {
-      if (
-        !eligibleStudentIds.has(
-          id
-        )
-      ) {
-        notEligibleStudentIds.add(
-          id
-        );
-      }
-    }
-  );
-
-  const totalNotEligible =
-    notEligibleStudentIds.size;
-
-  const totalPending =
-    Math.max(
-      0,
-      totalStudents -
-        totalEligible -
-        totalNotEligible
-    );
-
-  // =========================
-  // STUDENT FORM
-  // =========================
-
-  const handleStudentChange = (
-    event
-  ) => {
-    setStudentForm({
-      ...studentForm,
-      [event.target.name]:
-        event.target.value,
-    });
-  };
-
-  // =========================
-  // STUDENT SUBMIT
-  // =========================
-
-  const handleStudentSubmit =
-    async (event) => {
-      event.preventDefault();
-
-      setMessage("");
-
-      const studentData = {
-        name: studentForm.name,
-        cgpa: Number(
-          studentForm.cgpa
-        ),
-        backlogs: Number(
-          studentForm.backlogs
-        ),
-        branch: studentForm.branch,
-        graduationYear: Number(
-          studentForm.graduationYear
-        ),
-      };
-
-      try {
-        if (
-          editingStudentId !==
-          null
-        ) {
-          const response =
-            await apiFetch(
-              `${API}/students/${editingStudentId}`,
-              {
-                method: "PUT",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify(
-                  studentData
-                ),
-              }
-            );
-
-          if (!response.ok) {
-            throw new Error(
-              "Failed to update student"
-            );
-          }
-
-          const updatedStudent =
-            await response.json();
-
-          setStudents(
-            students.map(
-              (student) =>
-                student.id ===
-                editingStudentId
-                  ? updatedStudent
-                  : student
-            )
-          );
-
-          setMessage(
-            "Student updated successfully!"
-          );
-
-          setEditingStudentId(null);
-        } else {
-          const response =
-            await apiFetch(
-              `${API}/students`,
-              {
-                method: "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify(
-                  studentData
-                ),
-              }
-            );
-
-          if (!response.ok) {
-            throw new Error(
-              "Failed to add student"
-            );
-          }
-
-          const newStudent =
-            await response.json();
-
-          setStudents([
-            ...students,
-            newStudent,
-          ]);
-
-          setStudentId(
-            String(
-              newStudent.id
-            )
-          );
-
-          setMessage(
-            "Student added successfully!"
-          );
-        }
-
-        setStudentForm({
-          name: "",
-          cgpa: "",
-          backlogs: "",
-          branch: "",
-          graduationYear: "",
-        });
-
-        await loadPlacementReports();
-      } catch (error) {
-        console.error(error);
-
-        setMessage(
-          editingStudentId !==
-            null
-            ? "Failed to update student."
-            : "Failed to add student."
-        );
-      }
-    };
-
-  // =========================
-  // EDIT STUDENT
-  // =========================
-
-  const handleEditStudent = (
-    student
-  ) => {
-    setEditingStudentId(
-      student.id
-    );
-
-    setStudentForm({
-      name: student.name,
-      cgpa: student.cgpa,
-      backlogs: student.backlogs,
-      branch: student.branch,
-      graduationYear:
-        student.graduationYear,
-    });
-
-    setActiveSection(
-      "students"
-    );
-
-    setMessage("");
-  };
-
-  // =========================
-  // CANCEL STUDENT EDIT
-  // =========================
-
-  const cancelStudentEdit = () => {
-    setEditingStudentId(null);
-
-    setStudentForm({
-      name: "",
-      cgpa: "",
-      backlogs: "",
-      branch: "",
-      graduationYear: "",
-    });
-
-    setMessage("");
-  };
-
-  // =========================
-  // DELETE STUDENT
-  // =========================
-
-  const handleDeleteStudent =
-    async (id) => {
-      const confirmDelete =
-        window.confirm(
-          "Are you sure you want to delete this student?"
-        );
-
-      if (!confirmDelete) {
-        return;
-      }
-
-      try {
-        const response =
-          await apiFetch(
-            `${API}/students/${id}`,
-            {
-              method: "DELETE",
-            }
-          );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to delete student"
-          );
-        }
-
-        const updatedStudents =
-          students.filter(
-            (student) =>
-              student.id !== id
-          );
-
-        setStudents(
-          updatedStudents
-        );
-
-        if (
-          Number(studentId) ===
-          Number(id)
-        ) {
-          setStudentId(
-            updatedStudents.length >
-              0
-              ? String(
-                  updatedStudents[0]
-                    .id
-                )
-              : ""
-          );
-        }
-
-        setMessage(
-          "Student deleted successfully!"
-        );
-
-        await loadPlacementReports();
-        await loadEligibilityResults();
-      } catch (error) {
-        console.error(error);
-
-        setMessage(
-          "Failed to delete student."
-        );
-      }
-    };
-
-  // =========================
-  // COMPANY FORM
-  // =========================
-
-  const handleCompanyChange = (
-    event
-  ) => {
-    setCompanyForm({
-      ...companyForm,
-      [event.target.name]:
-        event.target.value,
-    });
-  };
-
-  // =========================
-  // COMPANY SUBMIT
-  // =========================
-
-  const handleCompanySubmit =
-    async (event) => {
-      event.preventDefault();
-
-      setMessage("");
-
-      const companyData = {
-        companyName:
-          companyForm.companyName,
-
-        minCgpa: Number(
-          companyForm.minCgpa
-        ),
-
-        maxBacklogs: Number(
-          companyForm.maxBacklogs
-        ),
-
-        eligibleBranch:
-          companyForm.eligibleBranch,
-
-        graduationYear: Number(
-          companyForm.graduationYear
-        ),
-      };
-
-      try {
-        if (
-          editingCompanyId !==
-          null
-        ) {
-          const response =
-            await apiFetch(
-              `${API}/companies/${editingCompanyId}`,
-              {
-                method: "PUT",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify(
-                  companyData
-                ),
-              }
-            );
-
-          if (!response.ok) {
-            throw new Error(
-              "Failed to update company"
-            );
-          }
-
-          const updatedCompany =
-            await response.json();
-
-          setCompanies(
-            companies.map(
-              (company) =>
-                company.id ===
-                editingCompanyId
-                  ? updatedCompany
-                  : company
-            )
-          );
-
-          setMessage(
-            "Company updated successfully!"
-          );
-
-          setEditingCompanyId(
-            null
-          );
-        } else {
-          const response =
-            await apiFetch(
-              `${API}/companies`,
-              {
-                method: "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify(
-                  companyData
-                ),
-              }
-            );
-
-          if (!response.ok) {
-            throw new Error(
-              "Failed to add company"
-            );
-          }
-
-          const newCompany =
-            await response.json();
-
-          setCompanies([
-            ...companies,
-            newCompany,
-          ]);
-
-          setCompanyId(
-            String(
-              newCompany.id
-            )
-          );
-
-          setMessage(
-            "Company added successfully!"
-          );
-        }
-
-        setCompanyForm({
-          companyName: "",
-          minCgpa: "",
-          maxBacklogs: "",
-          eligibleBranch: "",
-          graduationYear: "",
-        });
-
-        await loadPlacementReports();
-      } catch (error) {
-        console.error(error);
-
-        setMessage(
-          editingCompanyId !==
-            null
-            ? "Failed to update company."
-            : "Failed to add company."
-        );
-      }
-    };
-
-  // =========================
-  // EDIT COMPANY
-  // =========================
-
-  const handleEditCompany = (
-    company
-  ) => {
-    setEditingCompanyId(
-      company.id
-    );
-
-    setCompanyForm({
-      companyName:
-        company.companyName,
-
-      minCgpa: company.minCgpa,
-
-      maxBacklogs:
-        company.maxBacklogs,
-
-      eligibleBranch:
-        company.eligibleBranch,
-
-      graduationYear:
-        company.graduationYear,
-    });
-
-    setActiveSection(
-      "companies"
-    );
-
-    setMessage("");
-  };
-
-  // =========================
-  // CANCEL COMPANY EDIT
-  // =========================
-
-  const cancelCompanyEdit = () => {
-    setEditingCompanyId(null);
-
-    setCompanyForm({
-      companyName: "",
-      minCgpa: "",
-      maxBacklogs: "",
-      eligibleBranch: "",
-      graduationYear: "",
-    });
-
-    setMessage("");
-  };
-
-  // =========================
-  // DELETE COMPANY
-  // =========================
-
-  const handleDeleteCompany =
-    async (id) => {
-      const confirmDelete =
-        window.confirm(
-          "Are you sure you want to delete this company?"
-        );
-
-      if (!confirmDelete) {
-        return;
-      }
-
-      try {
-        const response =
-          await apiFetch(
-            `${API}/companies/${id}`,
-            {
-              method: "DELETE",
-            }
-          );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to delete company"
-          );
-        }
-
-        const updatedCompanies =
-          companies.filter(
-            (company) =>
-              company.id !== id
-          );
-
-        setCompanies(
-          updatedCompanies
-        );
-
-        if (
-          Number(companyId) ===
-          Number(id)
-        ) {
-          setCompanyId(
-            updatedCompanies.length >
-              0
-              ? String(
-                  updatedCompanies[0]
-                    .id
-                )
-              : ""
-          );
-        }
-
-        setMessage(
-          "Company deleted successfully!"
-        );
-
-        await loadPlacementReports();
-        await loadEligibilityResults();
-      } catch (error) {
-        console.error(error);
-
-        setMessage(
-          "Failed to delete company."
-        );
-      }
-    };
-
-  // =========================
-  // CHECK ELIGIBILITY
-  // =========================
-
-  const handleCheckEligibility =
-    async () => {
-      if (!studentId || !companyId) {
-        setEligibilityResult(
-          "Please select a student and company."
-        );
-
-        return;
-      }
-
-      setEligibilityResult("");
-      setMessage("");
-
-      try {
-        const response =
-          await apiFetch(
-            `${API}/eligibility?studentId=${studentId}&companyId=${companyId}`
-          );
-
-        const result =
-          await response.text();
-
-        setEligibilityResult(
-          result
-        );
-
-        if (!response.ok) {
-          return;
-        }
-
-        await loadEligibilityResults();
-        await loadPlacementReports();
-      } catch (error) {
-        console.error(error);
-
-        setEligibilityResult(
-          "Could not connect to eligibility backend."
-        );
-      }
-    };
-
-  // =========================
-  // RESULT STYLE
-  // =========================
-
-  const getResultStyle = (
-    result
-  ) => {
-    const text = String(
-      result || ""
-    ).toLowerCase();
-
-    if (
-      text.includes(
-        "eligible"
-      ) &&
-      !text.includes(
-        "not eligible"
-      )
-    ) {
-      return {
-        color: "#15803d",
-        fontWeight: "700",
-      };
-    }
-
-    return {
-      color: "#dc2626",
-      fontWeight: "700",
-    };
-  };
-
-  // =========================
-  // FILTER REPORTS
-  // =========================
-
-  const filteredPlacementReports =
-    placementReports.filter(
-      (student) => {
-        const search =
-          reportSearch
-            .toLowerCase()
-            .trim();
-
-        if (!search) {
-          return true;
-        }
-
-        return (
-          String(
-            student.name || ""
-          )
-            .toLowerCase()
-            .includes(search) ||
-          String(
-            student.branch || ""
-          )
-            .toLowerCase()
-            .includes(search) ||
-          String(
-            student.studentId || ""
-          ).includes(search)
-        );
-      }
-    );
-
-  // =========================
-  // LOGIN
-  // =========================
-
-  const handleLogin = (
-    userData
-  ) => {
-    setIsLoggedIn(true);
-
-    setCurrentUser({
-      username:
-        userData.username,
-
-      role:
-        userData.role,
-    });
-
-    setActiveSection(
-      "dashboard"
-    );
-
-    setMessage("");
-  };
-
-  // =========================
-  // LOGOUT
-  // =========================
 
   const handleLogout = () => {
-    localStorage.removeItem(
-      "loggedIn"
-    );
-
-    localStorage.removeItem(
-      "username"
-    );
-
-    localStorage.removeItem(
-      "userRole"
-    );
-
-    localStorage.removeItem(
-      "authToken"
-    );
-
-    setIsLoggedIn(false);
-
-    setCurrentUser({
-      username: "",
-      role: "USER",
-    });
-
-    setActiveSection(
-      "dashboard"
-    );
-
-    setSelectedReport(null);
-    setEligibilityResult("");
-    setMessage("");
+    ["loggedIn", "username", "userRole", "authToken"].forEach((key) => localStorage.removeItem(key));
+    setLoggedIn(false);
+    setUser({ username: "", role: "" });
   };
 
-  // =========================
-  // NAVIGATION
-  // =========================
+  const openForm = (record = null, type = activePage) => {
+    setEditingId(record?.id ?? null);
+    setForm(type === "students" ? (record ? { ...record } : EMPTY_STUDENT) : (record ? { ...record } : EMPTY_COMPANY));
+    setFormOpen(true);
+    setError("");
+    setNotice("");
+  };
 
-  const handleNavigation = (
-    section
-  ) => {
-    setActiveSection(
-      section
-    );
-
-    setSelectedReport(null);
-    setMessage("");
-
-    if (section === "results") {
-      loadEligibilityResults();
-    }
-
-    if (section === "reports") {
-      loadPlacementReports();
+  const saveRecord = async (event) => {
+    event.preventDefault();
+    const isStudent = activePage === "students";
+    const endpoint = isStudent ? "/api/students" : "/api/companies";
+    const payload = isStudent
+      ? { ...form, cgpa: Number(form.cgpa), backlogs: Number(form.backlogs), graduationYear: Number(form.graduationYear) }
+      : { ...form, minCgpa: Number(form.minCgpa), maxBacklogs: Number(form.maxBacklogs), graduationYear: Number(form.graduationYear) };
+    setLoading(true);
+    setError("");
+    try {
+      await request(`${endpoint}${editingId ? `/${editingId}` : ""}`, {
+        method: editingId ? "PUT" : "POST",
+        body: JSON.stringify(payload),
+      });
+      setFormOpen(false);
+      setNotice(`${isStudent ? "Student" : "Company"} ${editingId ? "updated" : "added"} successfully.`);
+      await loadData();
+    } catch (saveError) {
+      setError(saveError.message || "Could not save this record.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // =========================
-  // DASHBOARD CARD
-  // =========================
-
-  const DashboardCard = ({
-    title,
-    value,
-    description,
-    valueColor,
-  }) => {
-    return (
-      <div className="dashboard-card">
-
-        <p className="dashboard-title">
-          {title}
-        </p>
-
-        <h2
-          className="dashboard-value"
-          style={{
-            color: valueColor,
-          }}
-        >
-          {value}
-        </h2>
-
-        <p className="dashboard-description">
-          {description}
-        </p>
-
-      </div>
-    );
+  const deleteRecord = async (type, id) => {
+    const label = type === "students" ? "student" : "company";
+    if (!window.confirm(`Delete this ${label}? This cannot be undone.`)) return;
+    setLoading(true);
+    setError("");
+    try {
+      await request(`/api/${type}/${id}`, { method: "DELETE" });
+      setNotice(`${label[0].toUpperCase()}${label.slice(1)} deleted.`);
+      await loadData();
+    } catch (deleteError) {
+      setError(deleteError.message || `Could not delete this ${label}.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // =========================
-  // LOGIN SCREEN
-  // =========================
+  const runEligibilityCheck = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setNotice("");
+    setCheckResult("");
+    try {
+      const result = await request(`/api/eligibility?studentId=${encodeURIComponent(studentId)}&companyId=${encodeURIComponent(companyId)}`);
+      setCheckResult(String(result));
+      setNotice("Eligibility check completed and saved to results.");
+      await loadData();
+    } catch (checkError) {
+      setError(checkError.message || "Could not complete the eligibility check.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!isLoggedIn) {
-    return (
-      <Login
-        onLogin={handleLogin}
-      />
-    );
-  }
+  if (!loggedIn) return <Login onLogin={handleLogin} />;
 
-  // =========================
-  // APPLICATION
-  // =========================
+  const pageTitle = NAV_ITEMS.find((item) => item.id === activePage)?.label || "Overview";
+  const filteredStudents = students.filter((item) => `${item.name} ${item.branch} ${item.graduationYear}`.toLowerCase().includes(search.toLowerCase()));
+  const filteredCompanies = companies.filter((item) => `${item.companyName} ${item.eligibleBranch}`.toLowerCase().includes(search.toLowerCase()));
+  const getStudentName = (id) => students.find((student) => student.id === id)?.name || `Student #${id}`;
+  const getCompanyName = (id) => companies.find((company) => company.id === id)?.companyName || `Company #${id}`;
+  const isEligible = (result) => String(result).toLowerCase().includes("eligible") && !String(result).toLowerCase().includes("not eligible");
 
   return (
-    <div className="app">
-
-      {/* HEADER */}
-
-      <header className="header">
-
-        <div>
-
-          <h1>
-            Placement Eligibility Checker
-          </h1>
-
-          <p>
-            Student Placement Management
-            System
-          </p>
-
-        </div>
-
-      </header>
-
-      <div className="app-layout">
-
-        {/* SIDEBAR */}
-
-        <aside className="sidebar">
-
-          <div className="sidebar-brand">
-
-            <div className="brand-logo">
-              PEC
-            </div>
-
-            <div>
-
-              <h2>
-                Placement
-              </h2>
-
-              <p>
-                Management System
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="sidebar-divider"></div>
-
-          <nav className="sidebar-nav">
-
-            {visibleNavItems.map(
-              (item) => (
-                <button
-                  key={item.id}
-                  className={`nav-button ${
-                    activeSection ===
-                    item.id
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    handleNavigation(
-                      item.id
-                    )
-                  }
-                >
-
-                  <span className="nav-icon">
-                    {item.icon}
-                  </span>
-
-                  <span>
-                    {item.label}
-                  </span>
-
-                </button>
-              )
-            )}
-
-          </nav>
-
-          <div className="sidebar-footer">
-
-            <div className="user-info">
-
-              <div className="user-avatar">
-
-                {currentUser.username
-                  ? currentUser.username
-                      .charAt(0)
-                      .toUpperCase()
-                  : "U"}
-
-              </div>
-
-              <div className="user-details">
-
-                <strong>
-                  {currentUser.username ||
-                    "User"}
-                </strong>
-
-                <span>
-                  {currentUser.role ||
-                    "USER"}
-                </span>
-
-              </div>
-
-            </div>
-
-            <button
-              className="logout-button"
-              onClick={
-                handleLogout
-              }
-            >
-              Logout
+    <div className="workspace">
+      <aside className="sidebar">
+        <a className="brand" href="#overview" onClick={() => setActivePage("dashboard")} aria-label="Placement Desk home">
+          <span className="brand-mark"><ShieldCheck size={21} strokeWidth={2.2} /></span>
+          <span><strong>Placement Desk</strong><small>ELIGIBILITY PORTAL</small></span>
+        </a>
+        <div className="nav-caption">WORKSPACE</div>
+        <nav className="side-nav" aria-label="Main navigation">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <button key={id} className={`nav-item ${activePage === id ? "is-active" : ""}`} onClick={() => { setActivePage(id); setFormOpen(false); setSearch(""); setError(""); setNotice(""); }}>
+              <Icon size={18} strokeWidth={1.8} /><span>{label}</span>{activePage === id && <ChevronRight className="nav-chevron" size={15} />}
             </button>
-
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="sidebar-note"><span className="online-dot" />System connected</div>
+          <div className="profile-row">
+            <span className="avatar">{(user.username || "U").slice(0, 1).toUpperCase()}</span>
+            <span className="profile-copy"><strong>{user.username || "User"}</strong><small>{user.role || "Placement team"}</small></span>
+            <button className="icon-button logout" title="Sign out" aria-label="Sign out" onClick={handleLogout}><LogOut size={17} /></button>
           </div>
+        </div>
+      </aside>
 
-        </aside>
+      <div className="main-shell">
+        <header className="topbar">
+          <div className="breadcrumb"><span>Workspace</span><span className="crumb-divider">/</span><strong>{pageTitle}</strong></div>
+          <div className="topbar-actions"><span className="today-label">Placement cycle <strong>{new Date().getFullYear()}</strong></span><button className="icon-button refresh" title="Refresh data" aria-label="Refresh data" onClick={loadData} disabled={loading}><RefreshCw size={17} className={loading ? "spin" : ""} /></button></div>
+        </header>
 
-        {/* MAIN */}
-
-        <main className="main-content">
-
-          {message && (
-            <div className="message">
-              {message}
-            </div>
-          )}
-
-          {/* =========================
-              DASHBOARD
-          ========================= */}
-
-          {activeSection ===
-            "dashboard" && (
-            <section className="page-section">
-
-              <div className="page-heading">
-
-                <div>
-
-                  <h2>
-                    Dashboard
-                  </h2>
-
-                  <p>
-                    Overview of your placement
-                    management system.
-                  </p>
-
-                </div>
-
-              </div>
-
-              <div className="dashboard-grid">
-
-                <DashboardCard
-                  title="Total Students"
-                  value={
-                    totalStudents
-                  }
-                  description="Students registered"
-                  valueColor="#2563eb"
-                />
-
-                <DashboardCard
-                  title="Total Companies"
-                  value={
-                    totalCompanies
-                  }
-                  description="Companies registered"
-                  valueColor="#7c3aed"
-                />
-
-                <DashboardCard
-                  title="Eligible Students"
-                  value={
-                    totalEligible
-                  }
-                  description="Unique students eligible"
-                  valueColor="#16a34a"
-                />
-
-                <DashboardCard
-                  title="Not Eligible Students"
-                  value={
-                    totalNotEligible
-                  }
-                  description="Unique students not eligible"
-                  valueColor="#dc2626"
-                />
-
-                <DashboardCard
-                  title="Pending / Not Checked"
-                  value={
-                    totalPending
-                  }
-                  description="Students not checked yet"
-                  valueColor="#ea580c"
-                />
-
-              </div>
-
-              <div className="quick-actions card">
-
-                <h3>
-                  Quick Actions
-                </h3>
-
-                <p>
-                  Use the navigation menu to
-                  manage your placement system.
-                </p>
-
-                <div className="quick-action-buttons">
-
-                  {isAdmin && (
-                    <>
-                      <button
-                        onClick={() =>
-                          handleNavigation(
-                            "students"
-                          )
-                        }
-                      >
-                        Manage Students
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          handleNavigation(
-                            "companies"
-                          )
-                        }
-                      >
-                        Manage Companies
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          handleNavigation(
-                            "eligibility"
-                          )
-                        }
-                      >
-                        Check Eligibility
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    onClick={() =>
-                      handleNavigation(
-                        "reports"
-                      )
-                    }
-                  >
-                    View Reports
-                  </button>
-
-                </div>
-
-              </div>
-
+        <main className="content">
+          {(error || notice) && <div className={`alert ${error ? "alert-error" : "alert-success"}`} role="status"><span>{error || notice}</span><button className="alert-close" aria-label="Dismiss message" onClick={() => { setError(""); setNotice(""); }}><X size={16} /></button></div>}
+          {activePage === "dashboard" && <>
+            <section className="welcome-row"><div><div className="eyebrow">PLACEMENT OPERATIONS</div><h1>Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, {user.username || "there"}.</h1><p>Your placement pipeline, at a glance.</p></div><button className="button button-primary" onClick={() => setActivePage("eligibility")}><ClipboardCheck size={17} />Run eligibility check</button></section>
+            <section className="metric-grid" aria-label="Placement statistics">
+              <Metric label="Registered students" value={summary.totalStudents ?? students.length} icon={Users} tone="mint" note="Student records" />
+              <Metric label="Active companies" value={summary.totalCompanies ?? companies.length} icon={Building2} tone="blue" note="Eligibility criteria set" />
+              <Metric label="Eligible students" value={summary.eligibleStudents ?? 0} icon={ArrowUpRight} tone="green" note="At least one match" />
+              <Metric label="Awaiting review" value={summary.pendingStudents ?? 0} icon={ArrowDownRight} tone="amber" note="Not checked yet" />
             </section>
-          )}
-
-          {/* =========================
-              STUDENTS
-          ========================= */}
-
-          {activeSection ===
-            "students" &&
-            isAdmin && (
-            <section className="page-section">
-
-              <div className="page-heading">
-
-                <div>
-
-                  <h2>
-                    Students
-                  </h2>
-
-                  <p>
-                    Add, edit, and manage
-                    student records.
-                  </p>
-
-                </div>
-
+            <section className="dashboard-lower">
+              <div className="panel recent-panel"><div className="panel-heading"><div><h2>Recent eligibility checks</h2><p>Latest decisions across your student cohort</p></div><button className="text-button" onClick={() => setActivePage("results")}>View all <ChevronRight size={15} /></button></div>
+                {results.length ? <div className="table-wrap"><table><thead><tr><th>STUDENT</th><th>COMPANY</th><th>DECISION</th><th>CHECKED</th></tr></thead><tbody>{results.slice(-6).reverse().map((item) => <tr key={item.id}><td className="person-cell"><span className="table-avatar">{getStudentName(item.studentId).slice(0, 1)}</span><strong>{getStudentName(item.studentId)}</strong></td><td>{getCompanyName(item.companyId)}</td><td><Status eligible={isEligible(item.result)}>{isEligible(item.result) ? "Eligible" : "Not eligible"}</Status></td><td>{formatDate(item.checkedAt)}</td></tr>)}</tbody></table></div> : <EmptyState title="No checks yet" text="Run an eligibility check to start building your placement activity." action="Check eligibility" onClick={() => setActivePage("eligibility")} />}
               </div>
-
-              <section className="card">
-
-                <h3>
-                  {editingStudentId !==
-                  null
-                    ? "Edit Student"
-                    : "Add Student"}
-                </h3>
-
-                <form
-                  onSubmit={
-                    handleStudentSubmit
-                  }
-                >
-
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Student Name"
-                    value={
-                      studentForm.name
-                    }
-                    onChange={
-                      handleStudentChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="number"
-                    name="cgpa"
-                    placeholder="CGPA"
-                    step="0.01"
-                    min="0"
-                    max="10"
-                    value={
-                      studentForm.cgpa
-                    }
-                    onChange={
-                      handleStudentChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="number"
-                    name="backlogs"
-                    placeholder="Backlogs"
-                    min="0"
-                    value={
-                      studentForm.backlogs
-                    }
-                    onChange={
-                      handleStudentChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="text"
-                    name="branch"
-                    placeholder="Branch"
-                    value={
-                      studentForm.branch
-                    }
-                    onChange={
-                      handleStudentChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="number"
-                    name="graduationYear"
-                    placeholder="Graduation Year"
-                    value={
-                      studentForm.graduationYear
-                    }
-                    onChange={
-                      handleStudentChange
-                    }
-                    required
-                  />
-
-                  <div className="form-actions">
-
-                    <button type="submit">
-
-                      {editingStudentId !==
-                      null
-                        ? "Update Student"
-                        : "Add Student"}
-
-                    </button>
-
-                    {editingStudentId !==
-                      null && (
-                      <button
-                        type="button"
-                        className="cancel-button"
-                        onClick={
-                          cancelStudentEdit
-                        }
-                      >
-                        Cancel
-                      </button>
-                    )}
-
-                  </div>
-
-                </form>
-
-              </section>
-
-              <section className="card">
-
-                <div className="section-title-row">
-
-                  <div>
-
-                    <h3>
-                      Student List
-                    </h3>
-
-                    <p>
-                      {students.length}{" "}
-                      student(s) registered.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {students.length ===
-                0 ? (
-                  <p>
-                    No students found.
-                  </p>
-                ) : (
-                  <div className="table-container">
-
-                    <table>
-
-                      <thead>
-
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>CGPA</th>
-                          <th>Backlogs</th>
-                          <th>Branch</th>
-                          <th>
-                            Graduation Year
-                          </th>
-                          <th>Actions</th>
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {students.map(
-                          (student) => (
-                            <tr
-                              key={
-                                student.id
-                              }
-                            >
-
-                              <td>
-                                {student.id}
-                              </td>
-
-                              <td>
-                                {student.name}
-                              </td>
-
-                              <td>
-                                {student.cgpa}
-                              </td>
-
-                              <td>
-                                {
-                                  student.backlogs
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  student.branch
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  student.graduationYear
-                                }
-                              </td>
-
-                              <td>
-
-                                <div className="table-actions">
-
-                                  <button
-                                    onClick={() =>
-                                      handleEditStudent(
-                                        student
-                                      )
-                                    }
-                                  >
-                                    Edit
-                                  </button>
-
-                                  <button
-                                    className="delete-button"
-                                    onClick={() =>
-                                      handleDeleteStudent(
-                                        student.id
-                                      )
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-
-                                </div>
-
-                              </td>
-
-                            </tr>
-                          )
-                        )}
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-                )}
-
-              </section>
-
+              <div className="panel actions-panel"><div className="panel-heading"><div><h2>Quick actions</h2><p>Keep your placement data up to date</p></div></div><button className="action-link" onClick={() => { setActivePage("students"); openForm(null, "students"); }}><span className="action-icon action-mint"><Plus size={17} /></span><span><strong>Add a student</strong><small>Create a student profile</small></span><ChevronRight size={16} /></button><button className="action-link" onClick={() => { setActivePage("companies"); openForm(null, "companies"); }}><span className="action-icon action-lilac"><Building2 size={17} /></span><span><strong>Add a company</strong><small>Set eligibility criteria</small></span><ChevronRight size={16} /></button><button className="action-link" onClick={() => setActivePage("eligibility")}><span className="action-icon action-peach"><ClipboardCheck size={17} /></span><span><strong>Check eligibility</strong><small>Match a student to a role</small></span><ChevronRight size={16} /></button></div>
             </section>
-          )}
+          </>}
 
-          {/* =========================
-              COMPANIES
-          ========================= */}
+          {(activePage === "students" || activePage === "companies") && <>
+            <section className="page-heading"><div><div className="eyebrow">DIRECTORY</div><h1>{activePage === "students" ? "Student records" : "Company directory"}</h1><p>{activePage === "students" ? "Maintain student profiles used for eligibility checks." : "Manage employers and the criteria used to assess candidates."}</p></div>{!formOpen && <button className="button button-primary" onClick={() => openForm()}><Plus size={17} />Add {activePage === "students" ? "student" : "company"}</button>}</section>
+            {formOpen ? <section className="panel form-panel"><div className="panel-heading"><div><h2>{editingId ? "Update" : "New"} {activePage === "students" ? "student profile" : "company criteria"}</h2><p>Fields marked required must be completed.</p></div><button className="icon-button" aria-label="Close form" onClick={() => setFormOpen(false)}><X size={18} /></button></div>
+              <form className="record-form" onSubmit={saveRecord}>
+                {activePage === "students" ? <>
+                  <Field label="Full name"><input required name="name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="e.g. Aanya Sharma" /></Field>
+                  <Field label="CGPA"><input required type="number" min="0" max="10" step="0.01" value={form.cgpa} onChange={(event) => setForm({ ...form, cgpa: event.target.value })} placeholder="0.00 – 10.00" /></Field>
+                  <Field label="Branch"><input required value={form.branch} onChange={(event) => setForm({ ...form, branch: event.target.value })} placeholder="e.g. Computer Science" /></Field>
+                  <Field label="Active backlogs"><input required type="number" min="0" value={form.backlogs} onChange={(event) => setForm({ ...form, backlogs: event.target.value })} /></Field>
+                  <Field label="Graduation year"><input required type="number" min="2000" max="2100" value={form.graduationYear} onChange={(event) => setForm({ ...form, graduationYear: event.target.value })} placeholder={String(new Date().getFullYear())} /></Field>
+                </> : <>
+                  <Field label="Company name"><input required value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} placeholder="e.g. Northstar Technologies" /></Field>
+                  <Field label="Minimum CGPA"><input required type="number" min="0" max="10" step="0.01" value={form.minCgpa} onChange={(event) => setForm({ ...form, minCgpa: event.target.value })} placeholder="0.00 – 10.00" /></Field>
+                  <Field label="Eligible branch"><input required value={form.eligibleBranch} onChange={(event) => setForm({ ...form, eligibleBranch: event.target.value })} placeholder="e.g. Computer Science" /></Field>
+                  <Field label="Maximum backlogs"><input required type="number" min="0" value={form.maxBacklogs} onChange={(event) => setForm({ ...form, maxBacklogs: event.target.value })} /></Field>
+                  <Field label="Graduation year"><input required type="number" min="2000" max="2100" value={form.graduationYear} onChange={(event) => setForm({ ...form, graduationYear: event.target.value })} placeholder={String(new Date().getFullYear())} /></Field>
+                </>}
+                <div className="form-footer"><span>Eligibility matches the criteria exactly as entered.</span><div><button type="button" className="button button-quiet" onClick={() => setFormOpen(false)}>Cancel</button><button className="button button-primary" disabled={loading}>{loading ? "Saving…" : editingId ? "Save changes" : "Create record"}</button></div></div>
+              </form>
+            </section> : <section className="panel directory-panel"><div className="directory-toolbar"><div className="record-count"><strong>{activePage === "students" ? students.length : companies.length}</strong> records</div><label className="search-box"><Search size={16} /><input aria-label="Search records" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${activePage}…`} /></label></div>
+              {activePage === "students" ? <div className="table-wrap"><table><thead><tr><th>STUDENT</th><th>CGPA</th><th>BRANCH</th><th>BACKLOGS</th><th>GRADUATION</th><th /></tr></thead><tbody>{filteredStudents.map((item) => <tr key={item.id}><td className="person-cell"><span className="table-avatar">{item.name?.slice(0, 1)}</span><strong>{item.name}</strong></td><td><strong>{Number(item.cgpa).toFixed(2)}</strong></td><td>{item.branch}</td><td>{item.backlogs}</td><td>{item.graduationYear}</td><td><RowActions onEdit={() => openForm(item)} onDelete={() => deleteRecord("students", item.id)} /></td></tr>)}</tbody></table>{!filteredStudents.length && <EmptyState title={students.length ? "No matching students" : "No students added"} text={students.length ? "Try another search term." : "Add your first student profile to begin."} action={!students.length ? "Add student" : null} onClick={() => openForm()} />}</div> : <div className="table-wrap"><table><thead><tr><th>COMPANY</th><th>MIN. CGPA</th><th>MAX. BACKLOGS</th><th>ELIGIBLE BRANCH</th><th>GRADUATION</th><th /></tr></thead><tbody>{filteredCompanies.map((item) => <tr key={item.id}><td className="company-cell"><span className="company-mark"><Building2 size={16} /></span><strong>{item.companyName}</strong></td><td>{Number(item.minCgpa).toFixed(2)}</td><td>{item.maxBacklogs}</td><td>{item.eligibleBranch}</td><td>{item.graduationYear}</td><td><RowActions onEdit={() => openForm(item)} onDelete={() => deleteRecord("companies", item.id)} /></td></tr>)}</tbody></table>{!filteredCompanies.length && <EmptyState title={companies.length ? "No matching companies" : "No companies added"} text={companies.length ? "Try another search term." : "Add a company and its eligibility criteria."} action={!companies.length ? "Add company" : null} onClick={() => openForm()} />}</div>}
+            </section>}
+          </>}
 
-          {activeSection ===
-            "companies" &&
-            isAdmin && (
-            <section className="page-section">
+          {activePage === "eligibility" && <>
+            <section className="page-heading"><div><div className="eyebrow">CANDIDATE MATCHING</div><h1>Eligibility checker</h1><p>Compare a student profile against a company's placement criteria.</p></div></section>
+            <section className="eligibility-layout"><div className="panel checker-panel"><div className="panel-heading"><div><h2>Run a new check</h2><p>Each check is saved automatically to your results.</p></div><span className="checker-badge"><ShieldCheck size={17} /></span></div>
+              <form className="checker-form" onSubmit={runEligibilityCheck}><Field label="Select student"><select required value={studentId} onChange={(event) => setStudentId(event.target.value)}><option value="">Choose a student</option>{students.map((item) => <option value={item.id} key={item.id}>{item.name} · {item.branch}</option>)}</select></Field><Field label="Select company"><select required value={companyId} onChange={(event) => setCompanyId(event.target.value)}><option value="">Choose a company</option>{companies.map((item) => <option value={item.id} key={item.id}>{item.companyName}</option>)}</select></Field><button className="button button-primary check-button" disabled={loading || !students.length || !companies.length}><ClipboardCheck size={17} />{loading ? "Checking…" : "Check eligibility"}</button></form>
+              {checkResult && <div className={`check-result ${isEligible(checkResult) ? "result-pass" : "result-fail"}`}><div className="result-symbol">{isEligible(checkResult) ? <Check size={20} /> : <X size={20} />}</div><div><strong>{isEligible(checkResult) ? "Eligible for this opportunity" : "Not eligible for this opportunity"}</strong><p>{checkResult}</p></div></div>}
+              {(!students.length || !companies.length) && <p className="form-hint">Add at least one student and one company before running a check.</p>}
+            </div><aside className="panel criteria-panel"><div className="eyebrow">ASSESSMENT RULES</div><h2>What gets checked?</h2><p>A candidate must meet every requirement below to qualify.</p><ul className="criteria-list"><li><span className="criteria-number">01</span><span><strong>Academic standing</strong><small>CGPA meets or exceeds the company minimum</small></span></li><li><span className="criteria-number">02</span><span><strong>Backlog limit</strong><small>Active backlogs do not exceed the allowed maximum</small></span></li><li><span className="criteria-number">03</span><span><strong>Branch & graduation</strong><small>Branch and year match the hiring criteria</small></span></li></ul></aside></section>
+          </>}
 
-              <div className="page-heading">
-
-                <div>
-
-                  <h2>
-                    Companies
-                  </h2>
-
-                  <p>
-                    Manage companies and
-                    placement criteria.
-                  </p>
-
-                </div>
-
-              </div>
-
-              <section className="card">
-
-                <h3>
-                  {editingCompanyId !==
-                  null
-                    ? "Edit Company"
-                    : "Add Company"}
-                </h3>
-
-                <form
-                  onSubmit={
-                    handleCompanySubmit
-                  }
-                >
-
-                  <input
-                    type="text"
-                    name="companyName"
-                    placeholder="Company Name"
-                    value={
-                      companyForm.companyName
-                    }
-                    onChange={
-                      handleCompanyChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="number"
-                    name="minCgpa"
-                    placeholder="Minimum CGPA"
-                    step="0.01"
-                    min="0"
-                    max="10"
-                    value={
-                      companyForm.minCgpa
-                    }
-                    onChange={
-                      handleCompanyChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="number"
-                    name="maxBacklogs"
-                    placeholder="Maximum Backlogs"
-                    min="0"
-                    value={
-                      companyForm.maxBacklogs
-                    }
-                    onChange={
-                      handleCompanyChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="text"
-                    name="eligibleBranch"
-                    placeholder="Eligible Branch"
-                    value={
-                      companyForm.eligibleBranch
-                    }
-                    onChange={
-                      handleCompanyChange
-                    }
-                    required
-                  />
-
-                  <input
-                    type="number"
-                    name="graduationYear"
-                    placeholder="Graduation Year"
-                    value={
-                      companyForm.graduationYear
-                    }
-                    onChange={
-                      handleCompanyChange
-                    }
-                    required
-                  />
-
-                  <div className="form-actions">
-
-                    <button type="submit">
-
-                      {editingCompanyId !==
-                      null
-                        ? "Update Company"
-                        : "Add Company"}
-
-                    </button>
-
-                    {editingCompanyId !==
-                      null && (
-                      <button
-                        type="button"
-                        className="cancel-button"
-                        onClick={
-                          cancelCompanyEdit
-                        }
-                      >
-                        Cancel
-                      </button>
-                    )}
-
-                  </div>
-
-                </form>
-
-              </section>
-
-              <section className="card">
-
-                <div className="section-title-row">
-
-                  <div>
-
-                    <h3>
-                      Company List
-                    </h3>
-
-                    <p>
-                      {companies.length}{" "}
-                      company(ies) registered.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {companies.length ===
-                0 ? (
-                  <p>
-                    No companies found.
-                  </p>
-                ) : (
-                  <div className="table-container">
-
-                    <table>
-
-                      <thead>
-
-                        <tr>
-                          <th>ID</th>
-                          <th>Company</th>
-                          <th>Min CGPA</th>
-                          <th>
-                            Max Backlogs
-                          </th>
-                          <th>
-                            Eligible Branch
-                          </th>
-                          <th>
-                            Graduation Year
-                          </th>
-                          <th>Actions</th>
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {companies.map(
-                          (company) => (
-                            <tr
-                              key={
-                                company.id
-                              }
-                            >
-
-                              <td>
-                                {company.id}
-                              </td>
-
-                              <td>
-                                {
-                                  company.companyName
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  company.minCgpa
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  company.maxBacklogs
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  company.eligibleBranch
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  company.graduationYear
-                                }
-                              </td>
-
-                              <td>
-
-                                <div className="table-actions">
-
-                                  <button
-                                    onClick={() =>
-                                      handleEditCompany(
-                                        company
-                                      )
-                                    }
-                                  >
-                                    Edit
-                                  </button>
-
-                                  <button
-                                    className="delete-button"
-                                    onClick={() =>
-                                      handleDeleteCompany(
-                                        company.id
-                                      )
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-
-                                </div>
-
-                              </td>
-
-                            </tr>
-                          )
-                        )}
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-                )}
-
-              </section>
-
+          {activePage === "results" && <>
+            <section className="page-heading"><div><div className="eyebrow">DECISION LOG</div><h1>Eligibility results</h1><p>Every completed student-to-company assessment in one place.</p></div><div className="result-summary"><strong>{results.length}</strong><span>checks recorded</span></div></section>
+            <section className="panel directory-panel"><div className="directory-toolbar"><div className="record-count">Assessment history</div><label className="search-box"><Search size={16} /><input aria-label="Search results" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search student or company…" /></label></div>
+              {results.length ? <div className="table-wrap"><table><thead><tr><th>STUDENT</th><th>COMPANY</th><th>DECISION</th><th>DETAIL</th><th>CHECKED</th></tr></thead><tbody>{[...results].reverse().filter((item) => `${getStudentName(item.studentId)} ${getCompanyName(item.companyId)} ${item.result} ${item.reason || ""}`.toLowerCase().includes(search.toLowerCase())).map((item) => <tr key={item.id}><td className="person-cell"><span className="table-avatar">{getStudentName(item.studentId).slice(0, 1)}</span><strong>{getStudentName(item.studentId)}</strong></td><td>{getCompanyName(item.companyId)}</td><td><Status eligible={isEligible(item.result)}>{isEligible(item.result) ? "Eligible" : "Not eligible"}</Status></td><td className="reason-cell">{item.reason || item.result}</td><td>{formatDate(item.checkedAt)}</td></tr>)}</tbody></table></div> : <EmptyState title="No results to show" text="Eligibility checks you run will appear here." action="Run a check" onClick={() => setActivePage("eligibility")} />}
             </section>
-          )}
-
-          {/* =========================
-              ELIGIBILITY
-          ========================= */}
-
-          {activeSection ===
-            "eligibility" &&
-            isAdmin && (
-            <section className="page-section">
-
-              <div className="page-heading">
-
-                <div>
-
-                  <h2>
-                    Eligibility Check
-                  </h2>
-
-                  <p>
-                    Check placement eligibility
-                    for a student and company.
-                  </p>
-
-                </div>
-
-              </div>
-
-              <section className="card eligibility-card">
-
-                <h3>
-                  Check Placement
-                  Eligibility
-                </h3>
-
-                <p>
-                  Select a student and
-                  company to perform the
-                  eligibility check.
-                </p>
-
-                <div className="eligibility-form">
-
-                  <label>
-                    Student
-                  </label>
-
-                  <select
-                    value={studentId}
-                    onChange={(event) =>
-                      setStudentId(
-                        event.target.value
-                      )
-                    }
-                  >
-
-                    <option value="">
-                      Select Student
-                    </option>
-
-                    {students.map(
-                      (student) => (
-                        <option
-                          key={
-                            student.id
-                          }
-                          value={
-                            student.id
-                          }
-                        >
-                          {student.name} —
-                          ID{" "}
-                          {student.id}
-                        </option>
-                      )
-                    )}
-
-                  </select>
-
-                  <label>
-                    Company
-                  </label>
-
-                  <select
-                    value={companyId}
-                    onChange={(event) =>
-                      setCompanyId(
-                        event.target.value
-                      )
-                    }
-                  >
-
-                    <option value="">
-                      Select Company
-                    </option>
-
-                    {companies.map(
-                      (company) => (
-                        <option
-                          key={
-                            company.id
-                          }
-                          value={
-                            company.id
-                          }
-                        >
-                          {
-                            company.companyName
-                          }{" "}
-                          — ID{" "}
-                          {company.id}
-                        </option>
-                      )
-                    )}
-
-                  </select>
-
-                  <button
-                    onClick={
-                      handleCheckEligibility
-                    }
-                    disabled={
-                      !studentId ||
-                      !companyId
-                    }
-                  >
-                    Check Eligibility
-                  </button>
-
-                </div>
-
-                {eligibilityResult && (
-                  <div className="result-box">
-
-                    <h4>
-                      Eligibility Result
-                    </h4>
-
-                    <p
-                      style={getResultStyle(
-                        eligibilityResult
-                      )}
-                    >
-                      {eligibilityResult}
-                    </p>
-
-                  </div>
-                )}
-
-              </section>
-
-            </section>
-          )}
-
-          {/* =========================
-              RESULTS
-          ========================= */}
-
-          {activeSection ===
-            "results" && (
-            <section className="page-section">
-
-              <div className="page-heading">
-
-                <div>
-
-                  <h2>
-                    Eligibility Results
-                  </h2>
-
-                  <p>
-                    View saved eligibility
-                    results.
-                  </p>
-
-                </div>
-
-                <button
-                  onClick={
-                    loadEligibilityResults
-                  }
-                >
-                  Refresh Results
-                </button>
-
-              </div>
-
-              <section className="card">
-
-                {eligibilityResults.length ===
-                0 ? (
-                  <p>
-                    No eligibility
-                    results found.
-                  </p>
-                ) : (
-                  <div className="table-container">
-
-                    <table>
-
-                      <thead>
-
-                        <tr>
-                          <th>ID</th>
-                          <th>Student</th>
-                          <th>Company</th>
-                          <th>Result</th>
-                          <th>Reason</th>
-                          <th>
-                            Checked At
-                          </th>
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {eligibilityResults.map(
-                          (item) => (
-                            <tr
-                              key={
-                                item.id
-                              }
-                            >
-
-                              <td>
-                                {item.id}
-                              </td>
-
-                              <td>
-
-                                <strong>
-                                  {getStudentName(
-                                    item.studentId
-                                  )}
-                                </strong>
-
-                                <br />
-
-                                <small>
-                                  ID:{" "}
-                                  {
-                                    item.studentId
-                                  }
-                                </small>
-
-                              </td>
-
-                              <td>
-
-                                <strong>
-                                  {getCompanyName(
-                                    item.companyId
-                                  )}
-                                </strong>
-
-                                <br />
-
-                                <small>
-                                  ID:{" "}
-                                  {
-                                    item.companyId
-                                  }
-                                </small>
-
-                              </td>
-
-                              <td>
-
-                                <span
-                                  className="result-badge"
-                                  style={getResultStyle(
-                                    item.result
-                                  )}
-                                >
-                                  {
-                                    item.result
-                                  }
-                                </span>
-
-                              </td>
-
-                              <td>
-                                {
-                                  item.reason ||
-                                  "No reason available"
-                                }
-                              </td>
-
-                              <td>
-                                {formatDateTime(
-                                  item.checkedAt
-                                )}
-                              </td>
-
-                            </tr>
-                          )
-                        )}
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-                )}
-
-              </section>
-
-            </section>
-          )}
-
-          {/* =========================
-              REPORTS
-          ========================= */}
-
-          {activeSection ===
-            "reports" && (
-            <section className="page-section">
-
-              <div className="page-heading">
-
-                <div>
-
-                  <h2>
-                    Placement Reports
-                  </h2>
-
-                  <p>
-                    View student placement
-                    summaries.
-                  </p>
-
-                </div>
-
-                <button
-                  onClick={
-                    loadPlacementReports
-                  }
-                >
-                  Refresh Reports
-                </button>
-
-              </div>
-
-              <section className="card">
-
-                <div className="report-header">
-
-                  <div>
-
-                    <h3>
-                      Student Placement
-                      Reports
-                    </h3>
-
-                    <p>
-                      Search students and
-                      view placement status.
-                    </p>
-
-                  </div>
-
-                  <input
-                    className="report-search"
-                    type="text"
-                    placeholder="Search student..."
-                    value={
-                      reportSearch
-                    }
-                    onChange={(event) =>
-                      setReportSearch(
-                        event.target.value
-                      )
-                    }
-                  />
-
-                </div>
-
-                {placementReports.length ===
-                0 ? (
-                  <p>
-                    No placement reports
-                    available.
-                  </p>
-                ) : filteredPlacementReports.length ===
-                  0 ? (
-                  <p>
-                    No students match
-                    your search.
-                  </p>
-                ) : (
-                  <div className="table-container">
-
-                    <table>
-
-                      <thead>
-
-                        <tr>
-                          <th>Student</th>
-                          <th>CGPA</th>
-                          <th>Branch</th>
-                          <th>Backlogs</th>
-                          <th>Checked</th>
-                          <th>Eligible</th>
-                          <th>
-                            Not Eligible
-                          </th>
-                          <th>Status</th>
-                          <th>Action</th>
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {filteredPlacementReports.map(
-                          (student) => (
-                            <tr
-                              key={
-                                student.studentId
-                              }
-                            >
-
-                              <td>
-
-                                <strong>
-                                  {
-                                    student.name
-                                  }
-                                </strong>
-
-                                <br />
-
-                                <small>
-                                  ID:{" "}
-                                  {
-                                    student.studentId
-                                  }
-                                </small>
-
-                              </td>
-
-                              <td>
-                                {
-                                  student.cgpa
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  student.branch
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  student.backlogs
-                                }
-                              </td>
-
-                              <td>
-                                {
-                                  student.checkedCompanies
-                                }
-                              </td>
-
-                              <td>
-
-                                <span className="eligible-text">
-                                  {
-                                    student.eligibleCompanies
-                                  }
-                                </span>
-
-                              </td>
-
-                              <td>
-
-                                <span className="not-eligible-text">
-                                  {
-                                    student.notEligibleCompanies
-                                  }
-                                </span>
-
-                              </td>
-
-                              <td>
-
-                                <span
-                                  className={`status ${
-                                    student.overallStatus ===
-                                    "Eligible"
-                                      ? "eligible-status"
-                                      : student.overallStatus ===
-                                        "Not Checked"
-                                      ? "pending-status"
-                                      : "not-eligible-status"
-                                  }`}
-                                >
-                                  {
-                                    student.overallStatus
-                                  }
-                                </span>
-
-                              </td>
-
-                              <td>
-
-                                <button
-                                  onClick={() =>
-                                    setSelectedReport(
-                                      student
-                                    )
-                                  }
-                                >
-                                  View Details
-                                </button>
-
-                              </td>
-
-                            </tr>
-                          )
-                        )}
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-                )}
-
-              </section>
-
-              {selectedReport && (
-                <section className="card">
-
-                  <div className="details-header">
-
-                    <div>
-
-                      <h3>
-                        Placement Details
-                      </h3>
-
-                      <p>
-                        Detailed company
-                        eligibility results.
-                      </p>
-
-                    </div>
-
-                    <button
-                      onClick={() =>
-                        setSelectedReport(
-                          null
-                        )
-                      }
-                    >
-                      Close
-                    </button>
-
-                  </div>
-
-                  <div className="student-details-grid">
-
-                    <div className="detail-item">
-
-                      <strong>
-                        Student
-                      </strong>
-
-                      <p>
-                        {
-                          selectedReport.name
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="detail-item">
-
-                      <strong>
-                        CGPA
-                      </strong>
-
-                      <p>
-                        {
-                          selectedReport.cgpa
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="detail-item">
-
-                      <strong>
-                        Branch
-                      </strong>
-
-                      <p>
-                        {
-                          selectedReport.branch
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="detail-item">
-
-                      <strong>
-                        Backlogs
-                      </strong>
-
-                      <p>
-                        {
-                          selectedReport.backlogs
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="detail-item">
-
-                      <strong>
-                        Graduation Year
-                      </strong>
-
-                      <p>
-                        {
-                          selectedReport.graduationYear
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="detail-item">
-
-                      <strong>
-                        Overall Status
-                      </strong>
-
-                      <p
-                        className={
-                          selectedReport.overallStatus ===
-                          "Eligible"
-                            ? "eligible-text"
-                            : selectedReport.overallStatus ===
-                              "Not Checked"
-                            ? "pending-text"
-                            : "not-eligible-text"
-                        }
-                      >
-                        {
-                          selectedReport.overallStatus
-                        }
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  <h4 className="company-results-title">
-                    Company Results
-                  </h4>
-
-                  {!selectedReport.companyResults ||
-                  selectedReport.companyResults.length ===
-                    0 ? (
-                    <p>
-                      This student has not
-                      been checked against
-                      any company yet.
-                    </p>
-                  ) : (
-                    <div className="table-container">
-
-                      <table>
-
-                        <thead>
-
-                          <tr>
-                            <th>Company</th>
-                            <th>Result</th>
-                            <th>Reason</th>
-                            <th>
-                              Checked At
-                            </th>
-                          </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                          {selectedReport.companyResults.map(
-                            (
-                              company,
-                              index
-                            ) => (
-                              <tr
-                                key={`${company.companyId}-${index}`}
-                              >
-
-                                <td>
-                                  <strong>
-                                    {
-                                      company.companyName
-                                    }
-                                  </strong>
-                                </td>
-
-                                <td>
-
-                                  <span
-                                    style={getResultStyle(
-                                      company.result
-                                    )}
-                                  >
-                                    {
-                                      company.result
-                                    }
-                                  </span>
-
-                                </td>
-
-                                <td>
-                                  {
-                                    company.reason ||
-                                    "No reason available"
-                                  }
-                                </td>
-
-                                <td>
-                                  {formatDateTime(
-                                    company.checkedAt
-                                  )}
-                                </td>
-
-                              </tr>
-                            )
-                          )}
-
-                        </tbody>
-
-                      </table>
-
-                    </div>
-                  )}
-
-                </section>
-              )}
-
-            </section>
-          )}
-
+          </>}
+          <footer className="page-footer"><span>Placement Desk <span className="footer-dot">·</span> Student placement operations</span><span>{loading ? "Syncing data…" : "Data synced with placement services"}</span></footer>
         </main>
-
       </div>
-
     </div>
   );
+}
+
+function Metric({ label, value, icon: Icon, tone, note }) {
+  return <article className="metric-card"><div className={`metric-icon ${tone}`}><Icon size={19} strokeWidth={1.9} /></div><div className="metric-label">{label}</div><div className="metric-bottom"><strong>{value}</strong><span>{note}</span></div></article>;
+}
+
+function Field({ label, children }) {
+  return <label className="field"><span>{label}</span>{children}</label>;
+}
+
+function Status({ eligible, children }) {
+  return <span className={`status ${eligible ? "status-eligible" : "status-ineligible"}`}><span />{children}</span>;
+}
+
+function RowActions({ onEdit, onDelete }) {
+  return <div className="row-actions"><button className="icon-button" title="Edit record" aria-label="Edit record" onClick={onEdit}><Pencil size={15} /></button><button className="icon-button danger-icon" title="Delete record" aria-label="Delete record" onClick={onDelete}><Trash2 size={15} /></button></div>;
+}
+
+function EmptyState({ title, text, action, onClick }) {
+  return <div className="empty-state"><span className="empty-icon"><ClipboardCheck size={20} /></span><strong>{title}</strong><p>{text}</p>{action && <button className="button button-secondary" onClick={onClick}><Plus size={15} />{action}</button>}</div>;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
 export default App;
