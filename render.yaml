@@ -28,7 +28,10 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: https://placement-frontend.onrender.com
+        fromService:
+          type: web
+          name: placement-frontend
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
 
   - type: web
     name: placement-frontend
@@ -38,7 +41,4 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: placement-api
-          envVarKey: RENDER_EXTERNAL_HOSTNAME
+        value: https://placement-api-5rlf.onrender.com
