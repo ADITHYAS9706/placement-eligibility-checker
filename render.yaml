@@ -1,7 +1,6 @@
 databases:
   - name: placement-db
-    databaseName: placement_checker
-    user: placement_user
+    region: singapore
     plan: free
 
 services:
@@ -9,6 +8,7 @@ services:
     name: placement-api
     runtime: docker
     rootDir: backend
+    region: singapore
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
